@@ -1,0 +1,148 @@
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import type { Booking, BookingStatus, DocumentStatus, PaymentRecord } from '../types/booking';
+import { useVehicles } from './VehicleContext';
+
+const initialBookings: Booking[] = [
+  {
+    id: 'SH-BK-2025-001',
+    date: new Date(Date.now() - 3 * 86400000).toISOString(),
+    customer: { fullName: 'Suresh Raina', mobile: '9876501234', email: 'suresh@example.com', address: 'Boring Road, Patna', emergencyContact: '9876543210' },
+    vehicleConfig: { modelId: 'v1', variantId: 'v1-deluxe', colorName: 'Pearl Precious White' },
+    selectedAccessories: ['acc1', 'acc4'],
+    pricing: {
+      exShowroom: 74216,
+      rtoTotal: 5100,
+      insuranceTotal: 6250,
+      accessoriesTotal: 4700, // (3500 full body + 1200 gear)
+      otherChargesTotal: 1200,
+      onRoadPrice: 91466
+    },
+    payments: [
+      { id: 'p1', date: new Date(Date.now() - 3 * 86400000).toISOString(), amount: 5000, method: 'UPI', referenceNumber: 'UPI987654321', type: 'Booking Amount' }
+    ],
+    bookingAmountPaid: 5000,
+    balanceDue: 86466,
+    status: 'Confirmed',
+    documents: { aadharCard: 'Uploaded', addressProof: 'Pending', passportPhotos: 'Pending' }
+  }
+];
+
+interface BookingContextType {
+  bookings: Booking[];
+  addBooking: (bookingData: Omit<Booking, 'id' | 'date' | 'status' | 'documents' | 'payments' | 'bookingAmountPaid' | 'balanceDue'>) => string;
+  updateBookingStatus: (id: string, status: BookingStatus) => void;
+  updateDocumentStatus: (id: string, docType: keyof DocumentStatus, status: DocumentStatus[keyof DocumentStatus]) => void;
+  addPayment: (bookingId: string, payment: Omit<PaymentRecord, 'id' | 'date'>) => void;
+  cancelBooking: (id: string, reason: string) => void;
+}
+
+const BookingContext = createContext<BookingContextType | undefined>(undefined);
+
+export function BookingProvider({ children }: { children: ReactNode }) {
+  const { decrementStock } = useVehicles();
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+
+  const addBooking = (bookingData: Omit<Booking, 'id' | 'date' | 'status' | 'documents' | 'payments' | 'bookingAmountPaid' | 'balanceDue'>) => {
+    const newId = `SH-BK-${new Date().getFullYear()}-${String(bookings.length + 1).padStart(3, '0')}`;
+    
+    const newBooking: Booking = {
+      ...bookingData,
+      id: newId,
+      date: new Date().toISOString(),
+      status: 'Pending',
+      documents: { aadharCard: 'Pending', addressProof: 'Pending', passportPhotos: 'Pending' },
+      payments: [],
+      bookingAmountPaid: 0,
+      balanceDue: bookingData.pricing.onRoadPrice
+    };
+    
+    setBookings(prev => [newBooking, ...prev]);
+    return newId;
+  };
+
+  const handleStockUpdate = (booking: Booking, newStatus: BookingStatus) => {
+    // If the status is changing to Confirmed or Stock Allocated from a lower status, decrement stock
+    const triggerStatuses: BookingStatus[] = ['Confirmed', 'Stock Allocated'];
+    if (triggerStatuses.includes(newStatus) && !triggerStatuses.includes(booking.status)) {
+      decrementStock(
+        booking.vehicleConfig.modelId,
+        booking.vehicleConfig.variantId,
+        booking.vehicleConfig.colorName
+      );
+    }
+  };
+
+  const updateBookingStatus = (id: string, status: BookingStatus) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === id) {
+        handleStockUpdate(bk, status);
+        return { ...bk, status };
+      }
+      return bk;
+    }));
+  };
+
+  const updateDocumentStatus = (id: string, docType: keyof DocumentStatus, status: DocumentStatus[keyof DocumentStatus]) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === id) {
+        return { ...bk, documents: { ...bk.documents, [docType]: status } };
+      }
+      return bk;
+    }));
+  };
+
+  const addPayment = (bookingId: string, paymentData: Omit<PaymentRecord, 'id' | 'date'>) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === bookingId) {
+        const newPayment: PaymentRecord = {
+          ...paymentData,
+          id: `pay-${Date.now()}`,
+          date: new Date().toISOString()
+        };
+        
+        const newTotalPaid = bk.bookingAmountPaid + newPayment.amount;
+        const newBalance = bk.pricing.onRoadPrice - newTotalPaid;
+        
+        // Auto update status if fully paid or booking amount paid
+        let newStatus = bk.status;
+        if (newStatus === 'Pending' && newTotalPaid >= 5000) {
+          newStatus = 'Confirmed';
+          handleStockUpdate(bk, 'Confirmed');
+        }
+        
+        if (newBalance <= 0 && (newStatus === 'Payment Pending' || newStatus === 'Confirmed' || newStatus === 'Documentation In-Progress')) {
+          newStatus = 'Payment Complete';
+        }
+
+        return {
+          ...bk,
+          payments: [...bk.payments, newPayment],
+          bookingAmountPaid: newTotalPaid,
+          balanceDue: newBalance,
+          status: newStatus
+        };
+      }
+      return bk;
+    }));
+  };
+
+  const cancelBooking = (id: string, reason: string) => {
+    setBookings(prev => prev.map(bk => bk.id === id ? { ...bk, status: 'Cancelled', cancellationReason: reason } : bk));
+  };
+
+  return (
+    <BookingContext.Provider value={{
+      bookings, addBooking, updateBookingStatus, updateDocumentStatus, addPayment, cancelBooking
+    }}>
+      {children}
+    </BookingContext.Provider>
+  );
+}
+
+export function useBookings() {
+  const context = useContext(BookingContext);
+  if (context === undefined) {
+    throw new Error('useBookings must be used within a BookingProvider');
+  }
+  return context;
+}

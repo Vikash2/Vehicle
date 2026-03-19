@@ -1,0 +1,175 @@
+import { useState } from 'react';
+import { useShowroom } from '../../state/ShowroomContext';
+import { Edit2, Shield, Phone, Mail, Clock, Palette, MapPin } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const ShowroomManagement = () => {
+    const { allShowrooms, activeShowroom } = useShowroom();
+    const [editingShowroom, setEditingShowroom] = useState<any>(null);
+
+    const handleEdit = (showroom: any) => {
+        setEditingShowroom({ ...showroom });
+    };
+
+    const handleSave = () => {
+        // In a real app, this would be an API call
+        toast.success(`${editingShowroom.name} configuration updated successfully!`);
+        setEditingShowroom(null);
+    };
+
+    return (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex justify-between items-end bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800/60 shadow-sm">
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Showroom Management</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Configure branding, contact details, and locations for all branches.</p>
+                </div>
+                <button className="btn-primary flex items-center gap-3 px-8 shadow-2xl shadow-red-600/20">
+                    <span className="text-sm font-black uppercase tracking-widest">+ Add Showroom</span>
+                </button>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+                {allShowrooms.map((showroom) => (
+                    <div key={showroom.showroomId} className="card p-8 group border-slate-100 dark:border-slate-800/60 transition-all duration-300">
+                        <div className="flex justify-between items-start mb-8">
+                            <div className="flex items-center gap-5">
+                                <div
+                                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-2xl transition-all duration-300 group-hover:scale-105 group-hover:rotate-3"
+                                    style={{ backgroundColor: showroom.branding.primaryColor }}
+                                >
+                                    {showroom.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{showroom.name}</h3>
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mt-2 uppercase tracking-[0.15em] transition-colors">
+                                        <Shield size={12} className="fill-current" /> Authorized
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleEdit(showroom)}
+                                className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                                title="Edit Showroom"
+                            >
+                                <Edit2 size={22} />
+                            </button>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-8 text-sm font-medium">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <Phone size={16} />
+                                    </div>
+                                    <span className="font-bold tracking-tight">{showroom.contact.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <Mail size={16} />
+                                    </div>
+                                    <span className="font-bold truncate">{showroom.contact.email}</span>
+                                </div>
+                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <MapPin size={16} />
+                                    </div>
+                                    <span className="font-bold">{showroom.address.city}, {showroom.address.state}</span>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <Clock size={16} />
+                                    </div>
+                                    <span className="font-bold">{showroom.workingHours.weekdays}</span>
+                                </div>
+                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <Palette size={16} />
+                                    </div>
+                                    <span className="font-bold">Palette: {showroom.branding.primaryColor}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-8 border-t border-slate-50 dark:border-slate-800/60 flex items-center justify-between">
+                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
+                                ID: {showroom.showroomId}
+                            </div>
+                            {activeShowroom.showroomId === showroom.showroomId && (
+                                <span className="text-[10px] text-[var(--primary)] font-black uppercase tracking-[0.15em] bg-red-50 dark:bg-red-950/30 px-3 py-1 rounded-lg">
+                                    Currently Active View
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Modal / Sidebar for editing */}
+            {editingShowroom && (
+                <div className="fixed inset-0 z-50 flex items-center justify-end">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setEditingShowroom(null)} />
+                    <div className="relative w-full max-w-xl bg-white dark:bg-slate-950 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+                        <div className="p-10 border-b border-slate-100 dark:border-slate-800/60 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Showroom Profile</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Refine branch specific configurations.</p>
+                            </div>
+                            <button onClick={() => setEditingShowroom(null)} className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-3xl font-light">&times;</button>
+                        </div>
+                        <div className="flex-grow p-10 overflow-y-auto space-y-12">
+                            <section className="space-y-6">
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Identity & Recognition</h4>
+                                <div className="grid gap-6">
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Showroom Name</label>
+                                        <input type="text" value={editingShowroom.name} className="input-field" onChange={(e) => setEditingShowroom({ ...editingShowroom, name: e.target.value })} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Tagline</label>
+                                        <input type="text" value={editingShowroom.tagline} className="input-field" onChange={(e) => setEditingShowroom({ ...editingShowroom, tagline: e.target.value })} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="space-y-6">
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Aesthetic Settings</h4>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Brand Primary</label>
+                                        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/60">
+                                            <input type="color" value={editingShowroom.branding.primaryColor} className="w-10 h-10 p-0 border-0 bg-transparent cursor-pointer rounded-lg overflow-hidden" onChange={(e) => setEditingShowroom({ ...editingShowroom, branding: { ...editingShowroom.branding, primaryColor: e.target.value } })} />
+                                            <input type="text" value={editingShowroom.branding.primaryColor} className="bg-transparent text-sm font-black text-slate-900 dark:text-white outline-none flex-grow" onChange={(e) => setEditingShowroom({ ...editingShowroom, branding: { ...editingShowroom.branding, primaryColor: e.target.value } })} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="space-y-6">
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Communication</h4>
+                                <div className="grid gap-6">
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Professional Phone</label>
+                                        <input type="text" value={editingShowroom.contact.phone} className="input-field" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Support Email</label>
+                                        <input type="email" value={editingShowroom.contact.email} className="input-field" />
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <div className="p-10 border-t border-slate-100 dark:border-slate-800/60 flex gap-6 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                            <button onClick={() => setEditingShowroom(null)} className="btn-secondary flex-grow py-4">Discard</button>
+                            <button onClick={handleSave} className="btn-primary flex-grow py-4 shadow-2xl shadow-red-600/20">Apply Changes</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ShowroomManagement;

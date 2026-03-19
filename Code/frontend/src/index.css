@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  /* Honda Red Branding - Refined */
+  --primary-50: #fff1f2;
+  --primary-100: #ffe4e6;
+  --primary-200: #fecdd3;
+  --primary-300: #fda4af;
+  --primary-400: #fb7185;
+  --primary-500: #f43f5e;
+  --primary-600: #e11d48;
+  --primary-700: #be123c;
+  --primary-800: #9f1239;
+  --primary-900: #881337;
+
+  --primary: var(--primary-600);
+  --secondary: #0f172a;
+  /* Slate 900 */
+  --accent: #f59e0b;
+  /* Amber 500 */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --background: #020617;
+  /* Deep Slate 950 */
+  --foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --muted: #94a3b8;
+  --border: #1e293b;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased transition-colors duration-300;
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-xl hover:bg-[var(--primary-700)] transition-all shadow-lg shadow-red-500/20 hover:shadow-red-500/40 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm border border-slate-200 dark:border-slate-800 active:scale-[0.98];
+  }
+
+  .card {
+    @apply bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-100 dark:border-slate-800/60 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-none;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500;
+  }
+
+  .glass {
+    @apply bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border border-white/20 dark:border-slate-800/50;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-5xl font-black text-slate-900 dark:text-white text-center tracking-tight;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}

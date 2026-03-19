@@ -1,0 +1,81 @@
+import { motion } from 'framer-motion';
+import { ArrowRight, Star, ShieldCheck, Clock } from 'lucide-react';
+import { useShowroom } from '../state/ShowroomContext';
+
+const Hero = () => {
+    const { activeShowroom } = useShowroom();
+
+    return (
+        <div className="relative bg-white dark:bg-slate-950 pt-20 pb-32 overflow-hidden transition-colors duration-500">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-500/5 dark:bg-red-500/10 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[100px]"></div>
+            </div>
+
+            <div className="container-custom relative z-10">
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 font-bold text-xs mb-8 border border-red-100 dark:border-red-900/30 uppercase tracking-widest">
+                            <Star size={14} fill="currentColor" />
+                            <span>{activeShowroom.state}'s #1 Trusted {activeShowroom.brand} Showroom</span>
+                        </div>
+                        <h1 className="text-6xl md:text-8xl font-black text-slate-900 dark:text-white leading-[0.95] mb-8 tracking-tighter">
+                            Joy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-400">Riding</span>
+                        </h1>
+                        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-xl leading-relaxed font-medium">
+                            Discover the latest range of {activeShowroom.brand} 2-wheelers at {activeShowroom.name}. Premium service, unbeatable deals.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-5">
+                            <a href="#inquiry" className="btn-primary flex items-center justify-center gap-3 text-lg px-8 py-4 shadow-2xl shadow-red-600/20">
+                                Get a Quote <ArrowRight size={20} />
+                            </a>
+                            <a href="#vehicles" className="btn-secondary flex items-center justify-center gap-3 text-lg px-8 py-4">
+                                Explore Catalog
+                            </a>
+                        </div>
+
+                        <div className="mt-16 grid grid-cols-3 gap-8 pt-12 border-t border-slate-100 dark:border-slate-800/50">
+                            {[
+                                { icon: ShieldCheck, label: 'Verified', sub: 'Authorized', color: 'text-emerald-500' },
+                                { icon: Clock, label: 'Fast', sub: 'Delivery', color: 'text-blue-500' },
+                                { icon: Star, label: '4.8/5', sub: 'Top Rated', color: 'text-amber-500' },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2.5 text-slate-900 dark:text-white font-black text-lg">
+                                        <item.icon size={22} className={item.color} />
+                                        <span>{item.label}</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{item.sub}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                        className="relative lg:ml-auto"
+                    >
+                        <div className="absolute -z-10 inset-0 bg-gradient-to-tr from-red-500/20 to-transparent blur-[100px] rounded-full"></div>
+                        <div className="relative group">
+                            <img
+                                src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=1000"
+                                alt="Honda Motorcycle"
+                                className="w-full max-w-2xl h-auto object-cover rounded-[2.5rem] shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
+                            />
+                            <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-inset ring-white/10 dark:ring-white/5 pointer-events-none"></div>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Hero;
