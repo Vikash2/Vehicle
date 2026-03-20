@@ -89,8 +89,8 @@ export default function AccessoriesManagement() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Accessories Management</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your genuine {filteredAccessories.length} accessories catalog</p>
+          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Accessories Management</h1>
+          <p className="text-[var(--text-secondary)] font-medium">Manage your genuine {filteredAccessories.length} accessories catalog</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
@@ -101,13 +101,13 @@ export default function AccessoriesManagement() {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-[var(--card-bg)] p-4 rounded-2xl shadow-sm border border-[var(--border)] flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-grow w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
             placeholder="Search by name or description..." 
-            className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-xl pl-12 pr-4 py-3 font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all"
+            className="w-full bg-[var(--bg-secondary)] border-none rounded-xl pl-12 pr-4 py-3 font-medium focus:ring-2 focus:ring-red-500 outline-none text-[var(--text-primary)] transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -128,7 +128,7 @@ export default function AccessoriesManagement() {
       {/* Accessories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAccessories.map(acc => (
-          <div key={acc.id} className="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-red-200 dark:hover:border-red-900/30 transition-all duration-300 relative overflow-hidden">
+          <div key={acc.id} className="group bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border)] shadow-sm hover:shadow-xl hover:border-red-200 dark:hover:border-red-900/30 transition-all duration-300 relative overflow-hidden">
              {/* Status Badge */}
              <div className="absolute top-4 right-4 z-10">
                 {acc.inStock ? (
@@ -185,8 +185,8 @@ export default function AccessoriesManagement() {
 
       {/* Add/Edit Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--modal-overlay)] backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-[var(--card-bg)] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                  <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                     {editingAccessory ? 'Edit Accessory' : 'Add New Accessory'}

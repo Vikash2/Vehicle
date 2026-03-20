@@ -59,13 +59,13 @@ export default function ShowroomReports() {
     <div className="space-y-8 animate-in fade-in duration-500 min-h-full pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Business Intelligence</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Real-time performance analytics and reports</p>
+          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Business Intelligence</h1>
+          <p className="text-[var(--text-secondary)] font-medium">Real-time performance analytics and reports</p>
         </div>
         <div className="flex gap-2">
            <button 
              onClick={() => exportToCSV('Sales_Bookings')}
-             className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+             className="flex items-center gap-2 bg-[var(--card-bg)] border border-[var(--border)] px-6 py-3 rounded-xl font-bold text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-all shadow-sm"
            >
              <Download size={18} /> Export Data
            </button>
@@ -73,7 +73,7 @@ export default function ShowroomReports() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl w-fit">
+      <div className="flex gap-1 bg-[var(--bg-secondary)] p-1.5 rounded-2xl w-fit">
         {[
           { id: 'sales', label: 'Sales Perf', icon: TrendingUp },
           { id: 'leads', label: 'Lead ROI', icon: Users },
@@ -82,7 +82,7 @@ export default function ShowroomReports() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-red-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--card-bg)] text-red-600 shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -91,27 +91,27 @@ export default function ShowroomReports() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+         <div className="bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border)] shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/10 transition-colors"></div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Gross Revenue</p>
+            <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">Gross Revenue</p>
             <div className="flex items-baseline gap-2">
-               <h3 className="text-4xl font-black text-slate-900 dark:text-white">₹{(totalRevenue / 100000).toFixed(2)}L</h3>
+               <h3 className="text-4xl font-black text-[var(--text-primary)]">₹{(totalRevenue / 100000).toFixed(2)}L</h3>
                <span className="text-emerald-500 font-bold text-sm flex items-center gap-1"><ArrowUpRight size={14} /> 12%</span>
             </div>
          </div>
-         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+         <div className="bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border)] shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-blue-500/10 transition-colors"></div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Conversions</p>
+            <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">Total Conversions</p>
             <div className="flex items-baseline gap-2">
-               <h3 className="text-4xl font-black text-slate-900 dark:text-white">{bookings.length}</h3>
+               <h3 className="text-4xl font-black text-[var(--text-primary)]">{bookings.length}</h3>
                <span className="text-blue-500 font-bold text-sm flex items-center gap-1">{conversionRate.toFixed(1)}% Rate</span>
             </div>
          </div>
-         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+         <div className="bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border)] shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-amber-500/10 transition-colors"></div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Avg Transaction</p>
+            <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">Avg Transaction</p>
             <div className="flex items-baseline gap-2">
-               <h3 className="text-4xl font-black text-slate-900 dark:text-white">₹{(avgTicketSize / 1000).toFixed(1)}K</h3>
+               <h3 className="text-4xl font-black text-[var(--text-primary)]">₹{(avgTicketSize / 1000).toFixed(1)}K</h3>
                <span className="text-amber-500 font-bold text-sm flex items-center gap-1"><TrendingUp size={14} /> Stable</span>
             </div>
          </div>
@@ -134,10 +134,10 @@ export default function ShowroomReports() {
                {modelWiseSales.map(([model, count]) => (
                   <div key={model}>
                      <div className="flex justify-between text-sm font-bold mb-2">
-                        <span className="text-slate-700 dark:text-slate-300 capitalize">{model}</span>
-                        <span className="text-slate-900 dark:text-white">{count} Units</span>
+                        <span className="text-[var(--text-secondary)] capitalize">{model}</span>
+                        <span className="text-[var(--text-primary)]">{count} Units</span>
                      </div>
-                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
+                     <div className="w-full bg-[var(--bg-secondary)] rounded-full h-3 overflow-hidden">
                         <div 
                            className="bg-red-600 h-full rounded-full transition-all duration-1000" 
                            style={{ width: `${(count / (bookings.length || 1)) * 100}%` }}

@@ -20,7 +20,7 @@ const ThemeToggle = () => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300
-                bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:ring-2 hover:ring-gray-200 dark:hover:ring-gray-700 shadow-sm"
+                bg-[var(--card-bg)] text-[var(--foreground)] hover:ring-2 hover:ring-[var(--border)] shadow-sm"
                 title="Change Theme"
             >
                 <motion.div
@@ -44,7 +44,7 @@ const ThemeToggle = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden p-1.5"
+                            className="absolute right-0 mt-2 w-36 bg-[var(--card-bg)] rounded-2xl shadow-2xl border border-[var(--border)] z-50 overflow-hidden p-1.5"
                         >
                             {themes.map((t) => (
                                 <button
@@ -56,7 +56,7 @@ const ThemeToggle = () => {
                                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold transition-all duration-200
                                     ${theme === t.id
                                             ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
+                                            : 'text-[var(--muted)] hover:bg-[var(--table-row-hover)]'}`}
                                 >
                                     <t.icon size={16} />
                                     {t.label}

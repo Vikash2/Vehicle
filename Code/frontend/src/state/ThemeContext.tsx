@@ -24,7 +24,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
     children,
     defaultTheme = 'system',
-    storageKey = 'vite-ui-theme',
+    storageKey = 'showroom-vms-theme',
     ...props
 }: ThemeProviderProps) {
     const [theme, setTheme] = useState<Theme>(
@@ -34,19 +34,31 @@ export function ThemeProvider({
     useEffect(() => {
         const root = window.document.documentElement;
 
-        root.classList.remove('light', 'dark');
-
+        // Determine the resolved theme
+        let resolvedTheme: 'light' | 'dark' = 'light';
+        
         if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-                .matches
+            resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
                 ? 'dark'
                 : 'light';
-
-            root.classList.add(systemTheme);
-            return;
+        } else {
+            resolvedTheme = theme;
         }
 
-        root.classList.add(theme);
+        // Set data-theme attribute as single source of truth
+        root.setAttribute('data-theme', resolvedTheme);
+
+        // Listen for system preference changes when theme is 'system'
+        if (theme === 'system') {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const handleChange = (e: MediaQueryListEvent) => {
+                const newResolvedTheme = e.matches ? 'dark' : 'light';
+                root.setAttribute('data-theme', newResolvedTheme);
+            };
+
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        }
     }, [theme]);
 
     const value = {

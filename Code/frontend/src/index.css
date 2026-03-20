@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Honda Red Branding - Refined */
+  /* Honda Red Branding */
   --primary-50: #fff1f2;
   --primary-100: #ffe4e6;
   --primary-200: #fecdd3;
@@ -14,23 +14,111 @@
   --primary-900: #881337;
 
   --primary: var(--primary-600);
-  --secondary: #0f172a;
-  /* Slate 900 */
-  --accent: #f59e0b;
-  /* Amber 500 */
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  
+  /* Semantic Tokens - Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+
+  --border: #e5e7eb;
+  --border-color: var(--border);
+
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+
+  --input-bg: #ffffff;
+  --input-text: #111827;
+
+  --navbar-bg: #ffffff;
+  --navbar-text: #111827;
+
+  --hover-bg: #f3f4f6;
+
+  /* Legacy compatibility (to be phased out) */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --muted: var(--text-muted);
+  
+  /* Tables */
+  --table-header-bg: var(--bg-secondary);
+  --table-row-hover: var(--hover-bg);
+  
+  /* Modals */
+  --modal-bg: var(--card-bg);
+  --modal-overlay: rgba(15, 23, 42, 0.5);
+  
+  /* Misc */
+  --scrollbar-track: var(--bg-secondary);
+  --scrollbar-thumb: #cbd5e1;
+  --skeleton-base: #e2e8f0;
+  --skeleton-highlight: #f1f5f9;
+  --toast-bg: #ffffff;
+  --toast-border: #e2e8f0;
+
+  /* Elevation Tokens */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 }
 
-.dark {
-  --background: #020617;
-  /* Deep Slate 950 */
-  --foreground: #f8fafc;
-  --secondary: #f1f5f9;
-  --muted: #94a3b8;
-  --border: #1e293b;
+[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+
+  --border: #374151;
+  --border-color: var(--border);
+
+  --card-bg: #1f2937;
+  --card-border: #374151;
+
+  --input-bg: #111827;
+  --input-text: #f9fafb;
+
+  --navbar-bg: #111827;
+  --navbar-text: #f9fafb;
+
+  --hover-bg: #374151;
+
+  /* Legacy compatibility */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --muted: var(--text-muted);
+  
+  /* Tables */
+  --table-header-bg: var(--bg-secondary);
+  --table-row-hover: var(--hover-bg);
+  
+  /* Modals */
+  --modal-bg: var(--card-bg);
+  --modal-overlay: rgba(2, 6, 23, 0.8);
+  
+  /* Misc */
+  --scrollbar-track: var(--bg-secondary);
+  --scrollbar-thumb: #334155;
+  --skeleton-base: #1e293b;
+  --skeleton-highlight: #334155;
+  --toast-bg: var(--card-bg);
+  --toast-border: var(--border);
+
+  /* Elevation Tokens (Dark) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.5);
 }
 
 @layer base {
@@ -46,23 +134,31 @@
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm border border-slate-200 dark:border-slate-800 active:scale-[0.98];
+    @apply px-6 py-3 bg-[var(--card-bg)] text-[var(--foreground)] font-bold rounded-xl hover:bg-[var(--table-row-hover)] transition-all shadow-md hover:shadow-lg border border-[var(--border)] active:shadow-sm active:scale-[0.98];
   }
 
   .card {
-    @apply bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-100 dark:border-slate-800/60 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-none;
+    @apply bg-[var(--card-bg)] backdrop-blur-sm rounded-2xl border border-[var(--border)] overflow-hidden transition-all duration-300 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:shadow-slate-200/50 dark:hover:shadow-none;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500;
+    @apply w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all placeholder:text-[var(--text-muted)] font-bold text-sm;
+  }
+
+  .choice-card {
+    @apply relative flex items-center gap-4 p-5 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-primary)] cursor-pointer transition-all duration-300 hover:border-red-200 hover:bg-red-50/5 hover:shadow-lg hover:shadow-slate-200/50 active:scale-[0.98];
+  }
+
+  .choice-card-active {
+    @apply border-red-600 bg-red-50/30 dark:bg-red-900/10 shadow-lg shadow-red-500/10;
   }
 
   .glass {
-    @apply bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border border-white/20 dark:border-slate-800/50;
+    @apply bg-[var(--bg-primary)]/70 backdrop-blur-xl border border-[var(--bg-primary)]/20 shadow-[var(--shadow-lg)];
   }
 
   .section-title {
-    @apply text-3xl md:text-5xl font-black text-slate-900 dark:text-white text-center tracking-tight;
+    @apply text-4xl md:text-6xl font-black text-[var(--foreground)] text-center tracking-tight leading-none;
   }
 
   .container-custom {

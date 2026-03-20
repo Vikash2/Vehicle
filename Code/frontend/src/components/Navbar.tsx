@@ -9,7 +9,7 @@ const Navbar = () => {
     const { activeShowroom } = useShowroom();
 
     return (
-        <nav className="glass sticky top-0 z-50 h-20 transition-all duration-300">
+        <nav className="sticky top-0 z-50 h-20 bg-[var(--navbar-bg)] text-[var(--navbar-text)] border-b border-[var(--border)] transition-all duration-300">
             <div className="container-custom h-full">
                 <div className="flex justify-between items-center h-full">
                     <div className="flex items-center gap-8">
@@ -21,12 +21,12 @@ const Navbar = () => {
                                 {activeShowroom.name.charAt(0)}
                             </div>
                             <div className="hidden sm:block">
-                                <span className="text-lg font-black text-slate-900 dark:text-white block leading-none tracking-tight">{activeShowroom.name}</span>
-                                <span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400 dark:text-slate-500 mt-1 block">Authorized Dealer</span>
+                                <span className="text-lg font-black text-[var(--foreground)] block leading-none tracking-tight">{activeShowroom.name}</span>
+                                <span className="text-[10px] font-black tracking-[0.2em] uppercase text-[var(--muted)] mt-1 block">Authorized Dealer</span>
                             </div>
                         </div>
 
-                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block"></div>
+                        <div className="h-8 w-px bg-[var(--border)] hidden lg:block"></div>
 
                         <div className="hidden lg:block">
                             <ShowroomSelector />
@@ -39,15 +39,15 @@ const Navbar = () => {
                             <a
                                 key={item.name}
                                 href={item.path}
-                                className="text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-white font-bold text-sm transition-colors tracking-wide"
+                                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] px-3 py-2 rounded-lg font-bold text-sm transition-all tracking-wide"
                             >
                                 {item.name}
                             </a>
                         ))}
-                        <a href="/admin" className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all transform hover:scale-110" title="Admin Dashboard">
+                        <a href="/admin" className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-lg transition-all transform hover:scale-110" title="Admin Dashboard">
                             <Shield size={20} />
                         </a>
-                        <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
+                        <div className="h-6 w-px bg-[var(--border)]"></div>
                         <ThemeToggle />
                         <a href="#inquiry" className="btn-primary py-2.5 px-6 text-sm">Book Test Ride</a>
                     </div>
@@ -57,7 +57,7 @@ const Navbar = () => {
                         <ThemeToggle />
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="text-slate-600 dark:text-slate-400 hover:text-red-500 p-2 transition-colors"
+                            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 transition-colors"
                         >
                             {isOpen ? <X size={26} /> : <Menu size={26} />}
                         </button>
@@ -67,21 +67,21 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden glass border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top duration-300">
+                <div className="md:hidden bg-[var(--navbar-bg)] border-t border-[var(--border)] animate-in slide-in-from-top duration-300">
                     <div className="px-6 py-8 space-y-4">
-                        <div className="pb-6 mb-6 border-b border-slate-100 dark:border-slate-800">
+                        <div className="pb-6 mb-6 border-b border-[var(--border)]">
                             <ShowroomSelector />
                         </div>
                         {[{name: 'Home', path: '/'}, {name: 'Catalog', path: '/vehicles'}, {name: 'Portal', path: '/portal'}].map((item) => (
                             <a
                                 key={item.name}
                                 href={item.path}
-                                className="block py-2 text-lg font-black text-slate-700 dark:text-slate-300 hover:text-red-500"
+                                className="block py-2 text-lg font-black text-[var(--text-primary)] hover:text-red-500"
                             >
                                 {item.name}
                             </a>
                         ))}
-                        <a href="/admin" className="flex items-center gap-3 py-2 text-lg font-black text-slate-700 dark:text-slate-300 hover:text-red-500">
+                        <a href="/admin" className="flex items-center gap-3 py-2 text-lg font-black text-[var(--text-primary)] hover:text-red-500">
                             <Shield size={20} /> Admin Dashboard
                         </a>
                         <div className="pt-4">

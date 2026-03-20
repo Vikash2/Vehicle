@@ -63,8 +63,8 @@ export default function BookingManagement() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Booking Management</h1>
-          <p className="text-sm text-slate-500">Track and manage customer vehicle bookings</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Booking Management</h1>
+          <p className="text-sm text-[var(--text-secondary)] font-medium">Track and manage customer vehicle bookings</p>
         </div>
         <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20">
           <Plus size={20} /> New Booking
@@ -80,7 +80,7 @@ export default function BookingManagement() {
               placeholder="Search by name, Booking ID or phone..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
             />
           </div>
           <button 
@@ -146,7 +146,7 @@ export default function BookingManagement() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+              <tr className="bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs uppercase tracking-wider">
                 <th className="p-4 font-semibold">Booking Info</th>
                 <th className="p-4 font-semibold">Vehicle Conf</th>
                 <th className="p-4 font-semibold">Financials</th>
@@ -154,7 +154,7 @@ export default function BookingManagement() {
                 <th className="p-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredBookings.map((bk) => {
                  const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
                  const vr = v?.variants.find(va => va.id === bk.vehicleConfig.variantId);
@@ -163,7 +163,7 @@ export default function BookingManagement() {
                 <tr 
                   key={bk.id} 
                   onClick={() => setSelectedBooking(bk)}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer"
+                  className="hover:bg-[var(--hover-bg)] transition cursor-pointer"
                 >
                   <td className="p-4">
                     <div className="flex items-start gap-3">
@@ -171,11 +171,11 @@ export default function BookingManagement() {
                         {bk.customer.fullName.charAt(0)}
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <div className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                            {bk.id}
                         </div>
-                        <div className="text-xs text-slate-500 font-medium">{bk.customer.fullName} • {bk.customer.mobile}</div>
-                        <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400 uppercase tracking-widest font-semibold" title={new Date(bk.date).toLocaleString()}>
+                        <div className="text-xs text-[var(--text-muted)] font-medium">{bk.customer.fullName} • {bk.customer.mobile}</div>
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold" title={new Date(bk.date).toLocaleString()}>
                           <Calendar size={10} /> {new Date(bk.date).toLocaleDateString()}
                         </div>
                       </div>
@@ -251,11 +251,11 @@ export default function BookingManagement() {
       </div>
 
       {selectedBooking && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-50 flex items-center justify-end animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 h-full w-full max-w-lg shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200 dark:border-slate-800">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-900/50">
+        <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-[2px] z-50 flex items-center justify-end animate-in fade-in duration-200">
+          <div className="bg-[var(--card-bg)] h-full w-full max-w-lg shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[var(--border)]">
+            <div className="p-5 border-b border-[var(--border)] flex justify-between items-start bg-[var(--bg-secondary)]">
               <div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-xl font-black text-[var(--text-primary)] flex items-center gap-2">
                    {selectedBooking.id}                 </h2>
                  <div className="flex items-center gap-2 mt-2">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${getStatusBadgeColor(selectedBooking.status)}`}>{selectedBooking.status}</span>

@@ -6,7 +6,7 @@ import Hero from './components/Hero';
 import VehicleCard from './components/VehicleCard';
 import InquiryForm from './components/InquiryForm';
 import {
-  MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, CheckCircle2
+  MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, CheckCircle2, ArrowRight
 } from 'lucide-react';
 import { ShowroomProvider, useShowroom } from './state/ShowroomContext';
 import { VehicleProvider, useVehicles } from './state/VehicleContext';
@@ -43,7 +43,7 @@ function LandingPage() {
       {/* Vehicle Showcase Section */}
       <motion.section
         id="vehicles"
-        className="py-32 bg-slate-50 dark:bg-slate-900/30 transition-colors duration-300 relative overflow-hidden"
+        className="py-32 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)]/30 transition-colors duration-300 relative overflow-hidden"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -53,7 +53,7 @@ function LandingPage() {
           <div className="text-center mb-20">
             <h2 className="section-title mb-4">Elite Collection</h2>
             <div className="w-24 h-1.5 bg-red-600 mx-auto rounded-full mb-8"></div>
-            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium text-lg">Explore our best-selling {activeShowroom.brand} 2-wheelers. Find the perfect blend of performance, style, and economy.</p>
+            <p className="text-[var(--text-secondary)] max-w-2xl mx-auto font-medium text-lg">Explore our best-selling {activeShowroom.brand} 2-wheelers. Find the perfect blend of performance, style, and economy.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
             {vehicles.map((v, i) => (
@@ -70,13 +70,20 @@ function LandingPage() {
               />
             ))}
           </div>
+
+          <div className="mt-16 text-center">
+            <a href="/vehicles" className="btn-secondary inline-flex items-center gap-3 px-10 py-5 text-xl group shadow-2xl">
+              View Full Catalog
+              <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+            </a>
+          </div>
         </div>
       </motion.section>
 
       {/* Inquiry Form Section */}
       <motion.section
         id="inquiry"
-        className="py-32 bg-white dark:bg-slate-950 relative overflow-hidden"
+        className="py-32 bg-[var(--bg-primary)] dark:bg-[var(--bg-primary)]/50 relative overflow-hidden"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -90,7 +97,7 @@ function LandingPage() {
         <div className="container-custom relative z-10">
           <div className="grid lg:grid-cols-2 gap-24 items-center">
             <div>
-              <h2 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-12 leading-[1.1] tracking-tighter">
+              <h2 className="text-5xl md:text-7xl font-black text-[var(--text-primary)] mb-12 leading-[1.1] tracking-tighter">
                 Ready to take the <br />
                 <span className="text-red-600">Next Step?</span>
               </h2>
@@ -101,12 +108,12 @@ function LandingPage() {
                   { icon: CheckCircle2, title: 'Maximum Exchange Value', desc: 'Get the best market value for your old vehicle in minutes.', color: 'emerald' },
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-6 group">
-                    <div className={`w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center flex-shrink-0 text-slate-400 group-hover:bg-red-500 group-hover:text-white transition-all duration-300 shadow-sm shadow-slate-200/50 dark:shadow-none`}>
+                    <div className={`w-14 h-14 rounded-2xl bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0 text-[var(--text-muted)] group-hover:bg-red-500 group-hover:text-white transition-all duration-300 shadow-sm shadow-slate-200/50 dark:shadow-none`}>
                       <item.icon size={28} />
                     </div>
                     <div>
-                      <h4 className="text-xl font-black text-slate-900 dark:text-white mb-2">{item.title}</h4>
-                      <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{item.desc}</p>
+                      <h4 className="text-xl font-black text-[var(--text-primary)] mb-2">{item.title}</h4>
+                      <p className="text-[var(--text-secondary)] font-medium leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -236,7 +243,7 @@ function App() {
                         <Route path="bookings" element={<BookingManagement />} />
                         <Route path="accessories" element={<AccessoriesManagement />} />
                         <Route path="reports" element={<ShowroomReports />} />
-                        <Route path="settings" element={<div className="p-8 font-bold text-slate-800 dark:text-white">Settings (Coming Soon)</div>} />
+                        <Route path="settings" element={<div className="p-8 font-bold text-[var(--text-primary)] transition-colors">Settings (Coming Soon)</div>} />
                       </Route>
                     </Routes>
                     <Toaster position="bottom-right" />

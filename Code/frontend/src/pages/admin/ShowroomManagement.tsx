@@ -19,10 +19,10 @@ const ShowroomManagement = () => {
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex justify-between items-end bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800/60 shadow-sm">
+            <div className="flex justify-between items-end bg-[var(--card-bg)] p-8 rounded-[2rem] border border-[var(--border)] shadow-sm">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Showroom Management</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Configure branding, contact details, and locations for all branches.</p>
+                    <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Showroom Management</h1>
+                    <p className="text-[var(--text-secondary)] mt-2 font-medium">Configure branding, contact details, and locations for all branches.</p>
                 </div>
                 <button className="btn-primary flex items-center gap-3 px-8 shadow-2xl shadow-red-600/20">
                     <span className="text-sm font-black uppercase tracking-widest">+ Add Showroom</span>
@@ -31,7 +31,7 @@ const ShowroomManagement = () => {
 
             <div className="grid lg:grid-cols-2 gap-8">
                 {allShowrooms.map((showroom) => (
-                    <div key={showroom.showroomId} className="card p-8 group border-slate-100 dark:border-slate-800/60 transition-all duration-300">
+                    <div key={showroom.showroomId} className="card p-8 group border-[var(--border)] transition-all duration-300">
                         <div className="flex justify-between items-start mb-8">
                             <div className="flex items-center gap-5">
                                 <div
@@ -41,7 +41,7 @@ const ShowroomManagement = () => {
                                     {showroom.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{showroom.name}</h3>
+                                    <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">{showroom.name}</h3>
                                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mt-2 uppercase tracking-[0.15em] transition-colors">
                                         <Shield size={12} className="fill-current" /> Authorized
                                     </span>
@@ -49,7 +49,7 @@ const ShowroomManagement = () => {
                             </div>
                             <button
                                 onClick={() => handleEdit(showroom)}
-                                className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                                className="p-3 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
                                 title="Edit Showroom"
                             >
                                 <Edit2 size={22} />
@@ -58,8 +58,8 @@ const ShowroomManagement = () => {
 
                         <div className="grid sm:grid-cols-2 gap-8 text-sm font-medium">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3.5 text-slate-600 dark:text-slate-400">
-                                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                <div className="flex items-center gap-3.5 text-[var(--text-secondary)]">
+                                    <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-muted)]">
                                         <Phone size={16} />
                                     </div>
                                     <span className="font-bold tracking-tight">{showroom.contact.phone}</span>
@@ -110,9 +110,9 @@ const ShowroomManagement = () => {
             {/* Modal / Sidebar for editing */}
             {editingShowroom && (
                 <div className="fixed inset-0 z-50 flex items-center justify-end">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setEditingShowroom(null)} />
-                    <div className="relative w-full max-w-xl bg-white dark:bg-slate-950 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-                        <div className="p-10 border-b border-slate-100 dark:border-slate-800/60 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                    <div className="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-md" onClick={() => setEditingShowroom(null)} />
+                    <div className="relative w-full max-w-xl bg-[var(--card-bg)] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+                        <div className="p-10 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-secondary)]/50 backdrop-blur-xl">
                             <div>
                                 <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Showroom Profile</h2>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Refine branch specific configurations.</p>

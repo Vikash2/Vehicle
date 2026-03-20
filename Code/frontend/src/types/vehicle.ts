@@ -14,28 +14,28 @@ export interface VehicleSpecs {
   maxPower?: string; // e.g., "5.73 kW @ 8000 rpm"
   maxTorque?: string; // e.g., "8.90 Nm @ 5500 rpm"
   transmission?: string; // e.g., "CVT" or "5 Speed Manual"
-  
+
   // Fuel & Efficiency
   mileage: string; // e.g., "60 kmpl"
   fuelCapacity?: string; // e.g., "5.3 Liters"
-  
+
   // Dimensions & Weight
   length?: string; // mm
   width?: string; // mm
   height?: string; // mm
   wheelbase?: string; // mm
   weight: string; // kerb weight e.g., "107 kg"
-  
+
   // Tyres & Brakes
   frontBrake?: string; // e.g., "Drum 130mm"
   rearBrake?: string; // e.g., "Drum 130mm"
   frontTyre?: string; // e.g., "90/90-12 54J"
   rearTyre?: string; // e.g., "90/100-10 53J"
-  
+
   // Suspension
   frontSuspension?: string; // e.g., "Telescopic"
   rearSuspension?: string; // e.g., "3-Step Adjustable Spring Loaded Hydraulic"
-  
+
   // Other Features
   features?: string[]; // e.g., ["LED Headlamp", "Digital Console", "USB Charging"]
   warranty?: string; // e.g., "3 Years Standard Warranty"

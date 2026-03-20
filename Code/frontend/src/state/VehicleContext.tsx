@@ -43,7 +43,7 @@ const initialVehicles: Vehicle[] = [
       images: ['https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600']
     },
     specs: {
-      engine: '109.51 cc, 4 Stroke, SI Engine',
+      engine: '109.51 cc',
       maxPower: '5.73 kW @ 8000 rpm',
       maxTorque: '8.90 Nm @ 5500 rpm',
       transmission: 'CVT',
@@ -84,7 +84,7 @@ const initialVehicles: Vehicle[] = [
     model: 'SP 125',
     category: 'Motorcycle',
     image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600',
-    specs: { mileage: '65 kmpl', engine: '124 cc', weight: '116 kg' },
+    specs: { mileage: '65 kmpl', engine: '124 cc', weight: '116 kg', features: ['LED Lights', 'CBS', 'Digital Console'] },
     variants: [
       {
         id: 'v2-disc',
@@ -104,7 +104,7 @@ const initialVehicles: Vehicle[] = [
     model: 'Shine 100',
     category: 'Motorcycle',
     image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600',
-    specs: { mileage: '70 kmpl', engine: '100 cc', weight: '99 kg' },
+    specs: { mileage: '70 kmpl', engine: '100 cc', weight: '99 kg', features: ['CBS'] },
     variants: [
       {
         id: 'v3-std',
@@ -122,7 +122,7 @@ const initialVehicles: Vehicle[] = [
     model: 'Unicorn',
     category: 'Motorcycle',
     image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600',
-    specs: { mileage: '55 kmpl', engine: '162 cc', weight: '140 kg' },
+    specs: { mileage: '55 kmpl', engine: '162 cc', weight: '140 kg', features: ['ABS', 'LED Lights'] },
     variants: [
       {
         id: 'v4-std',

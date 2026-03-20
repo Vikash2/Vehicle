@@ -199,7 +199,7 @@ Create a comprehensive inquiry capture form:
   - Interested Model * (dropdown)
   - Preferred Variant (auto-populated based on model)
   - Preferred Color (show available colors)
-  - Budget Range (dropdown: Under 60k, 60-80k, 80k-1L, 1L-1.5L, Above 1.5L)
+  - Budget Range (dropdown: Under 60k, 60-80k, 80k-1L, 1L-1.5L, Above 1.5L) [this should be optional]
   
 - **Purchase Timeline**:
   - When planning to buy? (Immediate, Within 1 month, 1-3 months, 3-6 months, Just exploring)
@@ -296,7 +296,7 @@ Auto-score leads based on:
 
 ### **4. Booking Management System**
 
-#### **A. Booking Flow for Customers**
+#### **A. Booking Process (Staff-facing)**
 
 **Step 1: Vehicle Selection**
 - Browse catalog or select from inquiry
@@ -520,97 +520,37 @@ When booking is confirmed:
 
 #### **User Roles:**
 
-**1. Super Admin**
-- Full system access
-- Add/manage showrooms
-- Configure pricing, taxes
-- View all reports
-- Manage users and roles
+**1. Admin (Global)**
+- Full system access across all showrooms.
+- Onboard new showrooms and manage showroom configurations.
+- Grant and manage "Super User" access for showroom staff.
+- Configure global pricing, taxes, and RTO parameters.
+- View consolidated reports for all showrooms.
+- High-level user management and system maintenance.
 
-**2. Showroom Manager (Sandhya Honda)**
-- Manage showroom-specific data
-- View all inquiries and bookings
-- Assign leads to sales executives
-- Approve quotations and discounts
-- View showroom reports
-- Manage inventory
-- User management within showroom
+**2. Super User (Showroom-specific)**
+- One per showroom.
+- Manage showroom-specific data and inventory.
+- View and manage all inquiries and bookings for their showroom.
+- Assign leads to showroom staff.
+- Approve showroom-level quotations and discounts.
+- Manage showroom-specific users (Normal Users).
+- View showroom-specific performance reports.
 
-**3. Sales Executive**
-- View assigned inquiries
-- Update lead status
-- Generate quotations
-- Create bookings
-- Update booking status
-- View personal performance
-
-**4. Accountant**
-- View all bookings
-- Manage payments
-- Generate invoices
-- Financial reports
-- Refund processing
-
-**5. Documentation Officer**
-- View bookings requiring documents
-- Upload/verify documents
-- RTO form management
-- Track registration status
-
-**6. Customer**
-- View own inquiries
-- Track bookings
-- Upload documents
-- Make payments
-- View vehicle catalog
+**3. Normal User**
+- General operational access within a specific showroom.
+- Manage assigned inquiries and follow-ups.
+- Create and update bookings.
+- Handle document collection and verification.
+- Manage customer communications (WhatsApp, Email).
+- No access to configuration or high-level setting changes.
 
 #### **Authentication Features:**
-- Mobile number-based OTP login
-- Email/password login (for staff)
-- Role-based dashboard redirection
-- Session management
-- Password reset functionality
-- Remember me option
-- Security questions
-
----
-
-### **6. Customer Portal**
-
-#### **Dashboard:**
-- Welcome message
-- Active bookings count
-- Pending payments
-- Document upload status
-- Quick actions (New Inquiry, View Bookings)
-
-#### **My Inquiries:**
-- List of all inquiries submitted
-- Status tracking
-- Communication history
-- Quotations received
-
-#### **My Bookings:**
-- Active and past bookings
-- Detailed booking view
-- Status timeline with progress bar
-- Payment history
-- Upload documents
-- Download receipts/invoices
-- Delivery tracking
-
-#### **Vehicle Catalog:**
-- Browse all vehicles
-- Compare models
-- Calculate on-road price
-- Submit inquiry
-- Request test ride
-
-#### **Profile:**
-- Personal information
-- Saved addresses
-- Communication preferences
-- Change password
+- Email and password-based login for all staff.
+- Role-based dashboard redirection and permission enforcement.
+- Session management and secure logout.
+- Password reset and account recovery functionality.
+- Two-factor authentication (optional/future) for Admin/Super User.
 
 ---
 
@@ -1155,7 +1095,7 @@ statusHistory: [
 {
 status: "Pending",
 date: "2025-01-13T13:45:00Z",
-updatedBy: "Customer"
+updatedBy: "System"
 },
 {
 status: "Confirmed",
@@ -1178,16 +1118,6 @@ updatedAt: "2025-01-13T14:00:00Z"
 - Alert admin when stock falls below threshold (e.g., 2 units)
 - Prevent booking if color is out of stock
 
-#### **B. Automated Notifications**
-- **Customer Notifications:**
-  - Inquiry received confirmation
-  - Quotation email with PDF
-  - Booking confirmation with details
-  - Payment received confirmation
-  - Document upload reminder
-  - Status update notifications
-  - Delivery reminder
-  
 - **Staff Notifications:**
   - New inquiry alert
   - New booking alert
@@ -1269,9 +1199,8 @@ updatedAt: "2025-01-13T14:00:00Z"
 - [ ] Accessory selection updates price
 - [ ] Price calculator shows correct totals
 - [ ] Inquiry form validation works
-- [ ] OTP verification functions
 - [ ] Inquiry submission creates record
-- [ ] Email/SMS notifications sent
+- [ ] Staff Email notifications sent
 - [ ] Lead status updates correctly
 - [ ] Booking flow completes successfully
 - [ ] Payment integration works
@@ -1318,7 +1247,7 @@ updatedAt: "2025-01-13T14:00:00Z"
 6. Document upload
 
 **Week 9-10: Notifications & Reports**
-1. Email/SMS notifications
+1. Staff Email notifications
 2. WhatsApp integration
 3. PDF generation
 4. Basic reports

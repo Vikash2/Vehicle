@@ -82,8 +82,8 @@ export default function LeadsManagement() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Leads Management</h1>
-          <p className="text-sm text-slate-500">Track and manage customer inquiries</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Leads Management</h1>
+          <p className="text-sm text-[var(--text-secondary)] font-medium">Track and manage customer inquiries</p>
         </div>
         <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20">
           <Plus size={20} /> New Lead
@@ -99,7 +99,7 @@ export default function LeadsManagement() {
               placeholder="Search by name, ID or phone..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
             />
           </div>
           <button 
@@ -166,7 +166,7 @@ export default function LeadsManagement() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+              <tr className="bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs uppercase tracking-wider">
                 <th className="p-4 font-semibold">Lead Info</th>
                 <th className="p-4 font-semibold">Contact</th>
                 <th className="p-4 font-semibold">Vehicle Interest</th>
@@ -174,20 +174,20 @@ export default function LeadsManagement() {
                 <th className="p-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredInquiries.map((inq) => {
                 const vehicle = inq.interest.modelId ? vehicles.find(v => v.id === inq.interest.modelId) : null;
                 return (
-                  <tr key={inq.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                  <tr key={inq.id} className="hover:bg-[var(--hover-bg)] transition">
                     <td className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] font-bold shrink-0">
                           {inq.customer.fullName.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 dark:text-white capitalize">{inq.customer.fullName}</div>
-                          <div className="text-xs text-slate-500 font-medium">{inq.id}</div>
-                          <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+                          <div className="font-bold text-[var(--text-primary)] capitalize">{inq.customer.fullName}</div>
+                          <div className="text-xs text-[var(--text-muted)] font-medium">{inq.id}</div>
+                          <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
                             <Calendar size={10} /> {new Date(inq.date).toLocaleDateString()}
                           </div>
                         </div>
@@ -254,9 +254,9 @@ export default function LeadsManagement() {
       </div>
 
       {selectedLead && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-end">
-          <div className="bg-white dark:bg-slate-900 h-full w-full max-w-md shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200 dark:border-slate-800">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-900/50">
+        <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm z-50 flex items-center justify-end">
+          <div className="bg-[var(--card-bg)] h-full w-full max-w-md shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[var(--border)]">
+            <div className="p-6 border-b border-[var(--border)] flex justify-between items-start bg-[var(--bg-secondary)]">
               <div>
                 <h2 className="text-xl font-black text-slate-900 dark:text-white capitalize">{selectedLead.customer.fullName}</h2>
                 <p className="text-sm text-slate-500 font-medium">{selectedLead.id}</p>

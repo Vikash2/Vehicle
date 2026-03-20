@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      // FOUC Prevention: Apply theme before React renders
+      (function() {
+        const storageKey = 'showroom-vms-theme';
+        const theme = localStorage.getItem(storageKey) || 'system';
+        
+        let resolvedTheme = theme;
+        if (theme === 'system') {
+          resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        document.documentElement.setAttribute('data-theme', resolvedTheme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

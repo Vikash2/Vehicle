@@ -105,8 +105,8 @@ export default function VehicleManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Vehicle Management</h1>
-          <p className="text-sm text-slate-500">Manage showroom catalog, variants, and colors</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Vehicle Management</h1>
+          <p className="text-sm text-[var(--text-secondary)] font-medium">Manage showroom catalog, variants, and colors</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -126,7 +126,7 @@ export default function VehicleManagement() {
               placeholder="Search vehicles..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-[var(--text-primary)] transition-all"
             />
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function VehicleManagement() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
+              <tr className="bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-sm">
                 <th className="p-4 font-medium">Vehicle</th>
                 <th className="p-4 font-medium">Category</th>
                 <th className="p-4 font-medium">Variants (Starting Price)</th>
@@ -148,8 +148,8 @@ export default function VehicleManagement() {
                     <div className="flex items-center gap-3">
                       <img src={vehicle.image} alt={vehicle.model} className="w-12 h-12 rounded-lg object-cover" />
                       <div>
-                        <div className="font-semibold text-slate-900 dark:text-white">{vehicle.brand} {vehicle.model}</div>
-                        <div className="text-xs text-slate-500">{vehicle.specs.engine}</div>
+                        <div className="font-semibold text-[var(--text-primary)]">{vehicle.brand} {vehicle.model}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{vehicle.specs.engine}</div>
                       </div>
                     </div>
                   </td>
@@ -191,8 +191,8 @@ export default function VehicleManagement() {
 
       {/* Add Vehicle Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--card-bg)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add Comprehensive Vehicle</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
