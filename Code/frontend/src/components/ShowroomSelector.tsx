@@ -19,9 +19,9 @@ const ShowroomSelector = () => {
                 >
                     <MapPin size={18} />
                 </div>
-                <div className="text-left hidden lg:block">
-                    <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.2em] leading-none mb-1.5 opacity-80">Your Location</p>
-                    <p className="text-sm font-black text-[var(--text-primary)] leading-none flex items-center gap-1.5">
+                <div className="flex flex-col justify-center text-left hidden lg:flex h-10">
+                    <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.2em] opacity-80 mb-1 leading-none">Your Location</p>
+                    <p className="text-sm font-black text-[var(--text-primary)] flex items-center gap-1.5 leading-none">
                         {activeShowroom.name}
                         <ChevronDown size={14} className={`transition-transform duration-300 text-red-500 ${isOpen ? 'rotate-180' : ''}`} />
                     </p>

@@ -64,7 +64,7 @@ export default function VehicleCatalog() {
   }, [vehicles, category, priceRange, selectedFeatures, sort]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-secondary)] pt-20 pb-20">
+    <div className="min-h-screen bg-[var(--bg-secondary)] pt-0 pb-20">
       
       {/* Header */}
       <div className="bg-[var(--bg-primary)] border-b border-[var(--border)] pt-8 pb-4 sticky top-0 md:top-16 z-30 transition-colors">

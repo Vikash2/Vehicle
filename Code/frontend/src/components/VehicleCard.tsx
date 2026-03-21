@@ -1,4 +1,7 @@
-import { Fuel, Zap, Gauge } from 'lucide-react';
+import React from 'react';
+import { Fuel, Zap, Gauge, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface VehicleCardProps {
     model: string;
@@ -11,9 +14,6 @@ interface VehicleCardProps {
         weight: string;
     };
 }
-
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
 const VehicleCard: React.FC<VehicleCardProps> = ({ model, category, price, image, specs }) => {
     const navigate = useNavigate();
@@ -61,6 +61,16 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ model, category, price, image
                     </div>
                 </div>
 
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/#inquiry');
+                  }}
+                  className="w-full btn-primary py-4 flex items-center justify-center gap-3 group/btn shadow-xl shadow-red-500/20 active:scale-95 transition-all text-lg font-bold"
+                >
+                    Book Test Ride
+                    <ArrowRight size={20} className="group-hover/btn:translate-x-1 transition-all" />
+                </button>
             </div>
         </motion.div>
     );

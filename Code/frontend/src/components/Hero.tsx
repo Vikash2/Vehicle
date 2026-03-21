@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Star, ShieldCheck, Clock } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
 import { useShowroom } from '../state/ShowroomContext';
 
 const Hero = () => {
@@ -27,19 +27,19 @@ const Hero = () => {
                             Discover the latest range of {activeShowroom.brand} 2-wheelers at {activeShowroom.name}. Premium service, unbeatable deals.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-5">
-                            <a href="#inquiry" className="btn-primary flex items-center justify-center gap-3 text-lg px-8 py-4 shadow-2xl shadow-red-600/20">
+                            <a href="/#inquiry" className="btn-primary flex items-center justify-center gap-3 text-lg px-8 py-4 shadow-2xl shadow-red-600/20">
                                 Get a Quote <ArrowRight size={20} />
                             </a>
-                            <a href="#vehicles" className="btn-secondary flex items-center justify-center gap-3 text-lg px-8 py-4">
+                            <a href="/vehicles" className="btn-secondary flex items-center justify-center gap-3 text-lg px-8 py-4">
                                 Explore Catalog
                             </a>
                         </div>
 
                         <div className="mt-16 grid grid-cols-3 gap-8 pt-12 border-t border-[var(--border)]">
                             {[
-                                { icon: ShieldCheck, label: 'Verified', sub: 'Authorized', color: 'text-emerald-500' },
-                                { icon: Clock, label: 'Fast', sub: 'Delivery', color: 'text-blue-500' },
-                                { icon: Star, label: '4.8/5', sub: 'Top Rated', color: 'text-amber-500' },
+                                { icon: ShieldCheck, label: 'Verified', sub: 'Authorized Dealer', color: 'text-emerald-500' },
+                                { icon: Clock, label: 'Express', sub: 'Fast Delivery', color: 'text-blue-500' },
+                                { icon: CheckCircle2, label: '1000+', sub: 'Happy Riders', color: 'text-red-500' },
                             ].map((item, idx) => (
                                 <div key={idx} className="flex flex-col gap-2">
                                     <div className="flex items-center gap-2.5 text-[var(--foreground)] font-black text-lg">

@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import Navbar from './components/Navbar';
@@ -43,17 +44,17 @@ function LandingPage() {
       {/* Vehicle Showcase Section */}
       <motion.section
         id="vehicles"
-        className="py-32 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)]/30 transition-colors duration-300 relative overflow-hidden"
+        className="py-20 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)]/30 transition-colors duration-300 relative overflow-hidden"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
       >
         <div className="container-custom relative z-10">
-          <div className="text-center mb-20">
+          <div className="text-center mb-12">
             <h2 className="section-title mb-4">Elite Collection</h2>
-            <div className="w-24 h-1.5 bg-red-600 mx-auto rounded-full mb-8"></div>
-            <p className="text-[var(--text-secondary)] max-w-2xl mx-auto font-medium text-lg">Explore our best-selling {activeShowroom.brand} 2-wheelers. Find the perfect blend of performance, style, and economy.</p>
+            <div className="w-24 h-1.5 bg-red-600 mx-auto rounded-full mb-6"></div>
+            <p className="text-[var(--text-secondary)] max-w-2xl mx-auto font-medium text-lg">Explore our best-selling {activeShowroom.brand} 2-wheelers.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
             {vehicles.map((v, i) => (
@@ -83,7 +84,7 @@ function LandingPage() {
       {/* Inquiry Form Section */}
       <motion.section
         id="inquiry"
-        className="py-32 bg-[var(--bg-primary)] dark:bg-[var(--bg-primary)]/50 relative overflow-hidden"
+        className="py-20 bg-[var(--bg-primary)] dark:bg-[var(--bg-primary)]/50 relative overflow-hidden"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -212,6 +213,45 @@ function LandingPage() {
   );
 }
 
+function ScrollToHash() {
+  const { pathname, hash } = useLocation();
+  const { activeShowroom } = useShowroom();
+
+  useEffect(() => {
+    // Title management
+    const titles: Record<string, string> = {
+      '/': `${activeShowroom.name} | Authorized ${activeShowroom.brand} Dealer`,
+      '/vehicles': `Vehicle Catalog | ${activeShowroom.name}`,
+      '/book': `Book Now | ${activeShowroom.name}`,
+      '/login': `Staff Login | ${activeShowroom.name}`,
+      '/admin': `Dashboard | ${activeShowroom.name}`
+    };
+
+    const baseTitle = titles[pathname] || activeShowroom.name;
+    document.title = pathname.startsWith('/admin') ? titles['/admin'] : baseTitle;
+
+    if (hash) {
+      const element = document.getElementById(hash.slice(1));
+      if (element) {
+        const offset = 80; // Navbar height
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="showroom-vms-theme">
@@ -222,6 +262,7 @@ function App() {
               <AccessoryProvider>
                 <BookingProvider>
                   <div className="min-h-screen bg-[var(--background)] transition-colors duration-300">
+                    <ScrollToHash />
                     <Navbar />
                     <Routes>
                       <Route path="/" element={<LandingPage />} />
