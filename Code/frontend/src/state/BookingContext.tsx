@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Booking, BookingStatus, DocumentStatus, PaymentRecord } from '../types/booking';
 import { useVehicles } from './VehicleContext';
+
+const STORAGE_KEY = 'showroom-bookings';
 
 const initialBookings: Booking[] = [
   {
@@ -27,6 +29,19 @@ const initialBookings: Booking[] = [
   }
 ];
 
+// Load bookings from localStorage or use initial data
+const loadBookings = (): Booking[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to load bookings from localStorage:', error);
+  }
+  return initialBookings;
+};
+
 interface BookingContextType {
   bookings: Booking[];
   addBooking: (bookingData: Omit<Booking, 'id' | 'date' | 'status' | 'documents' | 'payments' | 'bookingAmountPaid' | 'balanceDue'>) => string;
@@ -40,7 +55,16 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
   const { decrementStock } = useVehicles();
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>(loadBookings);
+
+  // Persist bookings to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+    } catch (error) {
+      console.error('Failed to save bookings to localStorage:', error);
+    }
+  }, [bookings]);
 
   const addBooking = (bookingData: Omit<Booking, 'id' | 'date' | 'status' | 'documents' | 'payments' | 'bookingAmountPaid' | 'balanceDue'>) => {
     const newId = `SH-BK-${new Date().getFullYear()}-${String(bookings.length + 1).padStart(3, '0')}`;

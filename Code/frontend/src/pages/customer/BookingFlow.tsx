@@ -1,20 +1,25 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../../state/VehicleContext';
 import { useBookings } from '../../state/BookingContext';
 import { useAccessories } from '../../state/AccessoryContext';
 import { CheckCircle2, Shield, ShieldCheck, Wrench, Settings, CreditCard, Download, ArrowRight } from 'lucide-react';
 import type { SelectedVehicleConfig, BookingCustomer } from '../../types/booking';
+import { BookingSummaryTemplate } from '../../components/admin/DocumentTemplates';
 
 export default function BookingFlow() {
   const { vehicles } = useVehicles();
-  const { addBooking, addPayment } = useBookings();
+  const { bookings, addBooking, addPayment } = useBookings();
   const { accessories } = useAccessories();
+  const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
   const [selectedConfig, setSelectedConfig] = useState<Partial<SelectedVehicleConfig>>({});
   const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<string[]>([]);
   const [customerInfo, setCustomerInfo] = useState<Partial<BookingCustomer>>({});
   const [generatedBookingId, setGeneratedBookingId] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Computed Values
   const selectedVehicle = vehicles.find(v => v.id === selectedConfig.modelId);
@@ -40,24 +45,31 @@ export default function BookingFlow() {
 
   const handleBookNow = () => {
     if (!selectedConfig.modelId || !selectedConfig.variantId || !selectedConfig.colorName || !customerInfo.fullName || !customerInfo.mobile) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const bookingId = addBooking({
-      customer: customerInfo as BookingCustomer,
-      vehicleConfig: selectedConfig as SelectedVehicleConfig,
-      selectedAccessories: selectedAccessoryIds,
-      pricing
-    });
+    try {
+      const bookingId = addBooking({
+        customer: customerInfo as BookingCustomer,
+        vehicleConfig: selectedConfig as SelectedVehicleConfig,
+        selectedAccessories: selectedAccessoryIds,
+        pricing
+      });
 
-    // Simulate payment of booking amount ₹5000
-    addPayment(bookingId, {
-      amount: 5000,
-      method: 'UPI',
-      referenceNumber: `UPI${Math.floor(Math.random() * 1000000000)}`,
-      type: 'Booking Amount'
-    });
+      // Simulate payment of booking amount ₹5000
+      addPayment(bookingId, {
+        amount: 5000,
+        method: 'UPI',
+        referenceNumber: `UPI${Math.floor(Math.random() * 1000000000)}`,
+        type: 'Booking Amount'
+      });
 
-    setGeneratedBookingId(bookingId);
-    setStep(4); // Success step
+      setGeneratedBookingId(bookingId);
+      setStep(4); // Success step
+      setShowReceipt(true); // Auto-show receipt after booking
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getCategoryIcon = (cat: string) => {
@@ -68,23 +80,23 @@ export default function BookingFlow() {
   };
 
   return (
-    <div className="pt-24 pb-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
+    <div className="pb-16 min-h-screen transition-colors">
       <div className="container-custom">
         <div className="mb-10 text-center">
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Book Your Ride</h1>
+          <h1 className="text-4xl font-black text-[var(--text-primary)] mb-4">New Vehicle Booking</h1>
           
           {/* Progress Bar */}
           <div className="flex items-center justify-center max-w-2xl mx-auto mt-8">
              {[1, 2, 3, 4].map((s, i) => (
                 <React.Fragment key={s}>
-                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-white dark:bg-slate-800 text-slate-400 border-2 border-slate-200 dark:border-slate-700'}`}>
+                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-2 border-[var(--border)]'}`}>
                       {step > s ? <CheckCircle2 size={20} /> : s}
                    </div>
-                   {i < 3 && <div className={`flex-1 h-1.5 mx-2 rounded-full ${step > s ? 'bg-red-600' : 'bg-slate-200 dark:bg-slate-800'}`} />}
+                   {i < 3 && <div className={`flex-1 h-1.5 mx-2 rounded-full ${step > s ? 'bg-red-600' : 'bg-[var(--border)]'}`} />}
                 </React.Fragment>
              ))}
           </div>
-          <div className="flex justify-between max-w-2xl mx-auto mt-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <div className="flex justify-between max-w-2xl mx-auto mt-3 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
              <span className={step >= 1 ? 'text-red-600' : ''}>Vehicle</span>
              <span className={step >= 2 ? 'text-red-600' : ''}>Accessories</span>
              <span className={step >= 3 ? 'text-red-600' : ''}>Checkout</span>
@@ -99,21 +111,26 @@ export default function BookingFlow() {
             
             {/* STEP 1: VEHICLE SELECTION */}
             {step === 1 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-xl border border-slate-100 dark:border-slate-700/50 animate-in fade-in slide-in-from-bottom-4">
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-8 border-b border-slate-100 dark:border-slate-700 pb-4">Select Model & Variant</h2>
+              <div className="bg-[var(--card-bg)] rounded-2xl p-6 md:p-10 shadow-xl border border-[var(--border)] animate-in fade-in slide-in-from-bottom-4">
+                 <h2 className="text-2xl font-black text-[var(--text-primary)] mb-8 border-b border-[var(--border)] pb-4">Select Model & Variant</h2>
                  
                  <div className="space-y-8">
                     <div>
-                       <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-4">1. Choose Model</label>
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">1. Choose Model</label>
+                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                           {vehicles.map(v => (
                              <div 
                                key={v.id} 
                                onClick={() => setSelectedConfig({ modelId: v.id, variantId: undefined, colorName: undefined })}
-                               className={`cursor-pointer rounded-xl border-2 p-4 text-center transition-all ${selectedConfig.modelId === v.id ? 'border-red-600 bg-red-50 dark:bg-red-900/10 scale-105 shadow-xl shadow-red-600/10' : 'border-slate-200 dark:border-slate-700 hover:border-red-300'}`}
+                               className={`select-card p-4 text-center ${selectedConfig.modelId === v.id ? 'select-card-active scale-[1.03] shadow-xl' : ''}`}
                              >
                                 <img src={v.image} alt={v.model} className="w-full h-24 object-contain mb-3" />
-                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">{v.brand} {v.model}</h3>
+                                <h3 className="font-bold text-[var(--text-primary)] text-sm">{v.brand} {v.model}</h3>
+                                {selectedConfig.modelId === v.id && (
+                                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[var(--selection-border)]">
+                                    <CheckCircle2 size={10} /> Selected
+                                  </span>
+                                )}
                              </div>
                           ))}
                        </div>
@@ -121,17 +138,22 @@ export default function BookingFlow() {
 
                     {selectedVehicle && (
                        <div className="animate-in fade-in slide-in-from-top-4">
-                          <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-4">2. Choose Variant</label>
+                          <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">2. Choose Variant</label>
                           <div className="grid sm:grid-cols-3 gap-4">
                              {selectedVehicle.variants.map(varnt => (
                                 <div 
                                   key={varnt.id} 
                                   onClick={() => setSelectedConfig({ ...selectedConfig, variantId: varnt.id, colorName: undefined })}
-                                  className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col transition-all ${selectedConfig.variantId === varnt.id ? 'border-red-600 bg-red-50 dark:bg-red-900/10 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-red-300'}`}
+                                  className={`select-card p-4 flex flex-col ${selectedConfig.variantId === varnt.id ? 'select-card-active' : ''}`}
                                 >
-                                   <span className="font-bold text-slate-900 dark:text-white">{varnt.name}</span>
+                                   <div className="flex items-start justify-between mb-1">
+                                     <span className="font-bold text-[var(--text-primary)]">{varnt.name}</span>
+                                     {selectedConfig.variantId === varnt.id && (
+                                       <CheckCircle2 size={16} className="text-[var(--selection-border)] shrink-0 mt-0.5" />
+                                     )}
+                                   </div>
                                    <span className="text-red-600 font-black mt-2">₹{varnt.pricing.exShowroomPrice.toLocaleString('en-IN')}</span>
-                                   <span className="text-xs text-slate-500 mt-1">Ex-Showroom</span>
+                                   <span className="text-xs text-[var(--text-muted)] mt-1">Ex-Showroom</span>
                                 </div>
                              ))}
                           </div>
@@ -140,20 +162,31 @@ export default function BookingFlow() {
 
                     {selectedVariant && (
                        <div className="animate-in fade-in slide-in-from-top-4 relative z-0">
-                          <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-4">3. Choose Color</label>
-                          <div className="flex flex-wrap gap-4">
-                             {selectedVariant.colors.map(color => (
-                                <button 
-                                  key={color.name}
-                                  onClick={() => setSelectedConfig({ ...selectedConfig, colorName: color.name })}
-                                  className={`group relative w-16 h-16 rounded-full border-4 transition-all focus:outline-none ${selectedConfig.colorName === color.name ? 'border-red-600 scale-110 shadow-lg' : 'border-transparent hover:scale-105 shadow-md'}`}
-                                  style={{ backgroundColor: color.hexCode }}
-                                >
-                                   <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
-                                      {color.name}
+                          <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">3. Choose Color</label>
+                          <div className="flex flex-wrap gap-5">
+                             {selectedVariant.colors.map(color => {
+                               const isActive = selectedConfig.colorName === color.name;
+                               return (
+                                 <button 
+                                   key={color.name}
+                                   onClick={() => setSelectedConfig({ ...selectedConfig, colorName: color.name })}
+                                   className={`group relative flex flex-col items-center gap-2 focus:outline-none`}
+                                 >
+                                   <span
+                                     className={`w-12 h-12 rounded-full block transition-all duration-200 shadow-md
+                                       ${isActive
+                                         ? 'ring-4 ring-[var(--selection-border)] ring-offset-2 ring-offset-[var(--card-bg)] scale-110'
+                                         : 'ring-2 ring-[var(--border)] hover:ring-[var(--hover-selection-border)] hover:scale-105'
+                                       }`}
+                                     style={{ backgroundColor: color.hexCode }}
+                                   />
+                                   <span className={`text-[10px] font-bold transition-colors whitespace-nowrap
+                                     ${isActive ? 'text-[var(--selection-border)]' : 'text-[var(--text-muted)]'}`}>
+                                     {color.name}
                                    </span>
-                                </button>
-                             ))}
+                                 </button>
+                               );
+                             })}
                           </div>
                        </div>
                     )}
@@ -173,42 +206,55 @@ export default function BookingFlow() {
 
             {/* STEP 2: ACCESSORIES */}
             {step === 2 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-xl border border-slate-100 dark:border-slate-700/50 animate-in fade-in slide-in-from-right-8">
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Enhance Your Ride</h2>
-                 <p className="text-slate-500 mb-8 border-b border-slate-100 dark:border-slate-700 pb-4">Select genuine accessories for safety and style.</p>
+              <div className="bg-[var(--card-bg)] rounded-2xl p-6 md:p-10 shadow-xl border border-[var(--border)] animate-in fade-in slide-in-from-right-8">
+                 <h2 className="text-2xl font-black text-[var(--text-primary)] mb-2">Enhance Your Ride</h2>
+                 <p className="text-[var(--text-muted)] mb-8 border-b border-[var(--border)] pb-4">Select genuine accessories for safety and style.</p>
 
-                 <div className="space-y-4">
+                 <div className="space-y-3">
                     {accessories.map(acc => {
                        const isSelected = selectedAccessoryIds.includes(acc.id);
                        return (
                          <div 
                            key={acc.id}
                            onClick={() => setSelectedAccessoryIds(prev => isSelected ? prev.filter(id => id !== acc.id) : [...prev, acc.id])}
-                           className={`cursor-pointer group flex items-center justify-between p-4 rounded-xl border-2 transition-all ${isSelected ? 'border-red-600 bg-red-50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-700 hover:border-red-300 bg-white dark:bg-slate-800'}`}
+                           className={`cursor-pointer flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200
+                             ${isSelected
+                               ? 'border-[var(--selection-border)] bg-[var(--selection-bg)]'
+                               : 'border-[var(--border)] bg-[var(--card-bg)] hover:border-[var(--hover-selection-border)] hover:bg-[var(--hover-selection-bg)]'
+                             }`}
                          >
                             <div className="flex items-center gap-4">
-                               <div className={`w-6 h-6 rounded flex items-center justify-center border-2 transition-colors ${isSelected ? 'bg-red-600 border-red-600 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
-                                  {isSelected && <CheckCircle2 size={16} />}
+                               {/* Checkbox */}
+                               <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 shrink-0 transition-all
+                                 ${isSelected
+                                   ? 'bg-[var(--selection-border)] border-[var(--selection-border)]'
+                                   : 'border-[var(--border)] bg-[var(--card-bg)]'
+                                 }`}>
+                                  {isSelected && <CheckCircle2 size={13} className="text-white" />}
                                </div>
-                               <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                               <div className="w-11 h-11 bg-[var(--bg-secondary)] rounded-lg flex items-center justify-center shrink-0">
                                   {getCategoryIcon(acc.category)}
                                </div>
                                <div>
-                                  <h4 className="font-bold text-slate-900 dark:text-white">{acc.name}</h4>
-                                  <p className="text-xs text-slate-500">{acc.description}</p>
+                                  <h4 className="font-bold text-[var(--text-primary)] text-sm">{acc.name}</h4>
+                                  <p className="text-xs text-[var(--text-muted)]">{acc.description}</p>
                                </div>
                             </div>
-                            <div className="text-right">
-                               <div className="font-black text-slate-900 dark:text-white">₹{acc.price.toLocaleString('en-IN')}</div>
-                               {acc.installationCharges > 0 && <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">+ ₹{acc.installationCharges} fitting</div>}
+                            <div className="text-right shrink-0 ml-4">
+                               <div className="font-black text-[var(--text-primary)]">₹{acc.price.toLocaleString('en-IN')}</div>
+                               {acc.installationCharges > 0 && (
+                                 <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
+                                   + ₹{acc.installationCharges} fitting
+                                 </div>
+                               )}
                             </div>
                          </div>
-                       )
+                       );
                     })}
                  </div>
 
                  <div className="mt-10 flex justify-between">
-                    <button onClick={() => setStep(1)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Back</button>
+                    <button onClick={() => setStep(1)} className="px-6 py-3 rounded-xl font-bold text-[var(--text-muted)] hover:bg-[var(--hover-bg)] transition">Back</button>
                     <button onClick={() => setStep(3)} className="btn-primary flex items-center gap-2">Proceed to Checkout <ArrowRight size={20} /></button>
                  </div>
               </div>
@@ -216,62 +262,62 @@ export default function BookingFlow() {
 
             {/* STEP 3: CUSTOMER INFO */}
             {step === 3 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-xl border border-slate-100 dark:border-slate-700/50 animate-in fade-in slide-in-from-right-8">
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-8 border-b border-slate-100 dark:border-slate-700 pb-4">Customer Information</h2>
+              <div className="bg-[var(--card-bg)] rounded-2xl p-6 md:p-10 shadow-xl border border-[var(--border)] animate-in fade-in slide-in-from-right-8">
+                 <h2 className="text-2xl font-black text-[var(--text-primary)] mb-8 border-b border-[var(--border)] pb-4">Customer Information</h2>
 
                  <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                       <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Full Name *</label>
+                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Full Name *</label>
                        <input 
                          required
                          type="text" 
                          value={customerInfo.fullName || ''}
                          onChange={e => setCustomerInfo({...customerInfo, fullName: e.target.value})}
-                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                         className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 text-[var(--text-primary)]"
                          placeholder="As per Aadhar Card"
                        />
                     </div>
                     <div>
-                       <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Mobile Number *</label>
+                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Mobile Number *</label>
                        <input 
                          required
                          type="tel" 
                          value={customerInfo.mobile || ''}
                          onChange={e => setCustomerInfo({...customerInfo, mobile: e.target.value})}
-                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                         className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 text-[var(--text-primary)]"
                          placeholder="10 digit mobile number"
                        />
                     </div>
                     <div className="md:col-span-2">
-                       <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Email Address</label>
+                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Email Address</label>
                        <input 
                          type="email" 
                          value={customerInfo.email || ''}
                          onChange={e => setCustomerInfo({...customerInfo, email: e.target.value})}
-                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                         className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 text-[var(--text-primary)]"
                          placeholder="For booking receipts"
                        />
                     </div>
                     <div className="md:col-span-2">
-                       <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Complete Address *</label>
+                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Complete Address *</label>
                        <textarea 
                          required
                          value={customerInfo.address || ''}
                          onChange={e => setCustomerInfo({...customerInfo, address: e.target.value})}
-                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
+                         className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 text-[var(--text-primary)] min-h-[100px]"
                          placeholder="Street, Locality, Pincode"
                        />
                     </div>
                  </div>
 
                  <div className="mt-10 flex justify-between">
-                    <button onClick={() => setStep(2)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Back</button>
+                    <button onClick={() => setStep(2)} className="px-6 py-3 rounded-xl font-bold text-[var(--text-muted)] hover:bg-[var(--hover-bg)] transition">Back</button>
                     <button 
                        disabled={!customerInfo.fullName || !customerInfo.mobile || !customerInfo.address}
                        onClick={handleBookNow} 
                        className="btn-primary flex items-center gap-2 disabled:opacity-50"
                     >
-                       Pay ₹5,000 Booking Amount <CreditCard size={20} />
+                       Create Booking & Pay ₹5,000 <CreditCard size={20} />
                     </button>
                  </div>
               </div>
@@ -279,27 +325,32 @@ export default function BookingFlow() {
 
             {/* STEP 4: SUCCESS */}
             {step === 4 && (
-               <div className="bg-white dark:bg-slate-800 rounded-2xl p-10 md:p-16 shadow-2xl border border-emerald-500/30 text-center animate-in zoom-in duration-500">
-                  <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+               <div className="bg-[var(--card-bg)] rounded-2xl p-10 md:p-16 shadow-2xl border border-emerald-500/30 text-center animate-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                      <CheckCircle2 size={50} className="text-emerald-500" />
                   </div>
-                  <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">Booking Confirmed!</h2>
-                  <p className="text-slate-500 mb-8">Thank you for choosing Sandhya Honda. Your dream ride is officially reserved.</p>
+                  <h2 className="text-3xl font-black text-[var(--text-primary)] mb-2">Booking Created Successfully!</h2>
+                  <p className="text-[var(--text-muted)] mb-8">The booking has been registered. You can now manage it from the dashboard.</p>
 
-                  <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-6 inline-block max-w-sm w-full mx-auto mb-10 text-left border border-slate-200 dark:border-slate-800">
-                     <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Booking ID</div>
-                     <div className="font-mono text-2xl font-bold text-slate-900 dark:text-white mb-4">{generatedBookingId}</div>
-                     <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Vehicle</div>
-                     <div className="font-bold text-slate-800 dark:text-slate-200">{selectedVehicle?.brand} {selectedVehicle?.model} - {selectedVariant?.name}</div>
-                     <div className="text-sm text-slate-500">{selectedConfig.colorName}</div>
+                  <div className="bg-[var(--bg-secondary)] rounded-xl p-6 inline-block max-w-sm w-full mx-auto mb-10 text-left border border-[var(--border)]">
+                     <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Booking ID</div>
+                     <div className="font-mono text-2xl font-bold text-[var(--text-primary)] mb-4">{generatedBookingId}</div>
+                     <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Vehicle</div>
+                     <div className="font-bold text-[var(--text-secondary)]">{selectedVehicle?.brand} {selectedVehicle?.model} - {selectedVariant?.name}</div>
+                     <div className="text-sm text-[var(--text-muted)]">{selectedConfig.colorName}</div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-center gap-4">
-                     <button className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition">
-                        <Download size={20} /> Download Receipt
+                     <button
+                        onClick={() => {
+                          if (generatedBookingId) setShowReceipt(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-600/20"
+                     >
+                        <Download size={20} /> View / Download Receipt
                      </button>
-                     <button onClick={() => window.location.href = '/'} className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        Return to Home
+                     <button onClick={() => navigate('/admin/bookings')} className="flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-xl font-bold hover:bg-[var(--hover-bg)] border border-[var(--border)] transition">
+                        Go to All Bookings
                      </button>
                   </div>
                </div>
@@ -393,6 +444,14 @@ export default function BookingFlow() {
           )}
         </div>
       </div>
+
+      {/* Booking Receipt Modal */}
+      {showReceipt && generatedBookingId && (() => {
+        const booking = bookings.find(b => b.id === generatedBookingId);
+        return booking ? (
+          <BookingSummaryTemplate booking={booking} onClose={() => setShowReceipt(false)} />
+        ) : null;
+      })()}
     </div>
   );
 }

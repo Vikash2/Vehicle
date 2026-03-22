@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Inquiry, LeadStatus, InquiryTask, CommunicationLog } from '../types/inquiry';
 
 const initialInquiries: Inquiry[] = [
   {
     id: 'INQ-2025-001',
-    date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
     customer: { fullName: 'Rahul Sharma', mobileNumber: '9876543210', city: 'Patna' },
-    interest: { modelId: 'v1', modelName: 'Activa 6G', budgetRange: '80k-1L' },
+    interest: { modelId: 'v1', modelName: 'Activa 6G' },
     timeline: 'Immediate',
     exchangeRequired: false,
     financeRequired: true,
@@ -26,7 +26,7 @@ const initialInquiries: Inquiry[] = [
     id: 'INQ-2025-002',
     date: new Date().toISOString(),
     customer: { fullName: 'Anjali Verma', mobileNumber: '9123456780', city: 'Danapur' },
-    interest: { modelId: 'v2', modelName: 'SP 125', budgetRange: '1L-1.5L' },
+    interest: { modelId: 'v2', modelName: 'SP 125' },
     timeline: '1-3 months',
     exchangeRequired: true,
     financeRequired: false,
@@ -52,7 +52,17 @@ interface InquiryContextType {
 const InquiryContext = createContext<InquiryContextType | undefined>(undefined);
 
 export function InquiryProvider({ children }: { children: ReactNode }) {
-  const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
+  const [inquiries, setInquiries] = useState<Inquiry[]>(() => {
+    try {
+      const stored = localStorage.getItem('showroom-inquiries');
+      if (stored) return JSON.parse(stored) as Inquiry[];
+    } catch {}
+    return initialInquiries;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('showroom-inquiries', JSON.stringify(inquiries));
+  }, [inquiries]);
 
   const addInquiry = (data: Omit<Inquiry, 'id' | 'date' | 'status' | 'priority' | 'tasks' | 'history'>) => {
     const newId = `INQ-${new Date().getFullYear()}-${String(inquiries.length + 1).padStart(3, '0')}`;

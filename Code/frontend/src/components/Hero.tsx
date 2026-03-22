@@ -9,18 +9,18 @@ const Hero = () => {
         <div className="relative bg-[var(--background)] pt-20 pb-32 overflow-hidden transition-colors duration-500">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-500/5 dark:bg-red-500/10 rounded-full blur-[120px]"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[100px]"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-500/5 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[100px]"></div>
             </div>
 
             <div className="container-custom relative z-10">
-                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                     >
-                        <h1 className="text-6xl md:text-8xl font-black text-[var(--foreground)] leading-[0.95] mb-8 tracking-tighter">
+                        <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-[var(--foreground)] leading-[0.95] mb-8 tracking-tighter">
                             Joy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-400">Riding</span>
                         </h1>
                         <p className="text-lg md:text-xl text-[var(--muted)] mb-12 max-w-xl leading-relaxed font-medium">
@@ -65,7 +65,7 @@ const Hero = () => {
                                 alt="Honda Motorcycle"
                                 className="w-full max-w-2xl h-auto object-cover rounded-[2.5rem] shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
                             />
-                            <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-inset ring-white/10 dark:ring-white/5 pointer-events-none"></div>
+                            <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-inset ring-white/10 pointer-events-none"></div>
                         </div>
                     </motion.div>
                 </div>

@@ -61,10 +61,10 @@ export default function AdminDashboard() {
       {/* Key Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {[
-          { label: 'Total Active Leads', value: activeLeads, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-          { label: 'Pending Bookings', value: activeBookings.length, icon: FileText, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-          { label: 'Deliveries Ready', value: bookings.filter(b => b.status === 'Ready for Delivery').length, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-          { label: 'Total Revenue Collected', value: `₹${(totalRevenue / 100000).toFixed(2)}L`, icon: IndianRupee, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+          { label: 'Total Active Leads', value: activeLeads, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+          { label: 'Pending Bookings', value: activeBookings.length, icon: FileText, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+          { label: 'Deliveries Ready', value: bookings.filter(b => b.status === 'Ready for Delivery').length, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: 'Total Revenue Collected', value: `₹${(totalRevenue / 100000).toFixed(2)}L`, icon: IndianRupee, color: 'text-rose-500', bg: 'bg-rose-500/10' },
         ].map((stat, i) => (
           <div key={i} className="bg-[var(--card-bg)] p-6 rounded-2xl border border-[var(--border)] shadow-sm flex items-start justify-between">
             <div>
@@ -78,10 +78,10 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         
         {/* Charts / Breakdown Section */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="md:col-span-2 xl:col-span-2 space-y-8">
            
            <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--border)] p-8 shadow-sm">
               <div className="flex items-center justify-between mb-8">
@@ -120,12 +120,12 @@ export default function AdminDashboard() {
 
             {/* Low Stock Alerts */}
             {lowStockItems.length > 0 && (
-               <div className="bg-[var(--card-bg)] rounded-3xl border border-red-100 dark:border-red-900/30 p-8 shadow-sm">
+               <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--border)] p-8 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                      <h3 className="text-xl font-black text-[var(--foreground)] flex items-center gap-2">
                         <AlertTriangle className="text-red-500" /> Low Stock Alerts
                      </h3>
-                     <span className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold px-3 py-1 rounded-full">
+                     <span className="bg-red-500/10 text-red-600 text-xs font-bold px-3 py-1 rounded-full">
                         {lowStockItems.length} Items Low
                      </span>
                   </div>
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                               <p className="text-xs text-[var(--text-muted)]">{item.color}</p>
                            </div>
                            <div className="text-right">
-                              <p className="text-lg font-black text-red-600 dark:text-red-400">{item.stock}</p>
+                              <p className="text-lg font-black text-red-600">{item.stock}</p>
                               <p className="text-[10px] uppercase font-black text-[var(--text-muted)]">Left</p>
                            </div>
                         </div>
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
                        
                        <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]">
                           <div className="flex justify-between items-center mb-1">
-                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${act.type==='inquiry' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${act.type==='inquiry' ? 'bg-blue-500/10 text-blue-600' : 'bg-orange-500/10 text-orange-600'}`}>
                                 {act.type}
                              </span>
                              <span className="text-[10px] font-black text-[var(--muted)] capitalize">{act.date.toLocaleDateString()}</span>

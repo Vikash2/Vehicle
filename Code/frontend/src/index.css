@@ -15,28 +15,38 @@
 
   --primary: var(--primary-600);
   
-  /* Semantic Tokens - Light Theme */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
+  /* Semantic Tokens - Light Theme (layered hierarchy) */
+  --bg-primary: #f8fafc;       /* Page canvas — soft blue-gray, NOT harsh white */
+  --bg-secondary: #f1f5f9;     /* Sidebar, table headers, filter bars */
+  --bg-tertiary: #e2e8f0;      /* Inputs, selected states, chips */
 
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --text-primary: #0f172a;     /* High contrast headings */
+  --text-secondary: #334155;   /* Body text */
+  --text-muted: #64748b;       /* Captions, placeholders */
 
-  --border: #e5e7eb;
+  --border: #cbd5e1;           /* Visible card borders */
   --border-color: var(--border);
 
-  --card-bg: #ffffff;
-  --card-border: #e5e7eb;
+  --card-bg: #ffffff;          /* Pure white cards on off-white canvas = depth */
+  --card-border: #cbd5e1;
 
   --input-bg: #ffffff;
-  --input-text: #111827;
+  --input-text: #0f172a;
 
   --navbar-bg: #ffffff;
-  --navbar-text: #111827;
+  --navbar-text: #0f172a;
 
-  --hover-bg: #f3f4f6;
+  --hover-bg: #f1f5f9;         /* Subtle hover */
+
+  /* Selection States — theme-aware, never hardcoded light */
+  --selection-bg: #fef2f2;          /* light: soft red tint */
+  --selection-border: #dc2626;      /* red-600 */
+  --selection-text: #0f172a;        /* stays dark in light mode */
+  --selection-muted: #64748b;
+
+  /* Hover tint for selectable cards */
+  --hover-selection-bg: #fff5f5;
+  --hover-selection-border: #fca5a5;
 
   /* Legacy compatibility (to be phased out) */
   --background: var(--bg-primary);
@@ -49,17 +59,17 @@
   
   /* Modals */
   --modal-bg: var(--card-bg);
-  --modal-overlay: rgba(15, 23, 42, 0.5);
+  --modal-overlay: rgba(15, 23, 42, 0.55);
   
   /* Misc */
   --scrollbar-track: var(--bg-secondary);
-  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb: #94a3b8;
   --skeleton-base: #e2e8f0;
   --skeleton-highlight: #f1f5f9;
   --toast-bg: #ffffff;
-  --toast-border: #e2e8f0;
+  --toast-border: #cbd5e1;
 
-  /* Elevation Tokens */
+  /* Elevation Tokens - Light (stronger shadows for depth on off-white) */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -69,27 +79,36 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --bg-tertiary: #374151;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
 
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
 
-  --border: #374151;
+  --border: #334155;
   --border-color: var(--border);
 
-  --card-bg: #1f2937;
-  --card-border: #374151;
+  --card-bg: #1e293b;
+  --card-border: #334155;
 
-  --input-bg: #111827;
-  --input-text: #f9fafb;
+  --input-bg: #0f172a;
+  --input-text: #f1f5f9;
 
-  --navbar-bg: #111827;
-  --navbar-text: #f9fafb;
+  --navbar-bg: #0f172a;
+  --navbar-text: #f1f5f9;
 
-  --hover-bg: #374151;
+  --hover-bg: #334155;
+
+  /* Selection States — dark mode overrides */
+  --selection-bg: #3b0a0a;          /* dark: deep red tint, not light */
+  --selection-border: #ef4444;      /* red-500, brighter for dark bg */
+  --selection-text: #f1f5f9;        /* light text on dark bg */
+  --selection-muted: #94a3b8;
+
+  --hover-selection-bg: #2d0808;
+  --hover-selection-border: #f87171;
 
   /* Legacy compatibility */
   --background: var(--bg-primary);
@@ -106,7 +125,7 @@
   
   /* Misc */
   --scrollbar-track: var(--bg-secondary);
-  --scrollbar-thumb: #334155;
+  --scrollbar-thumb: #475569;
   --skeleton-base: #1e293b;
   --skeleton-highlight: #334155;
   --toast-bg: var(--card-bg);
@@ -138,19 +157,29 @@
   }
 
   .card {
-    @apply bg-[var(--card-bg)] backdrop-blur-sm rounded-2xl border border-[var(--border)] overflow-hidden transition-all duration-300 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:shadow-slate-200/50 dark:hover:shadow-none;
+    @apply bg-[var(--card-bg)] backdrop-blur-sm rounded-2xl border border-[var(--border)] overflow-hidden transition-all duration-300 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)];
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all placeholder:text-[var(--text-muted)] font-bold text-sm;
+    @apply w-full px-4 py-2.5 border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text-primary)] rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all placeholder:text-[var(--text-muted)] font-bold text-sm shadow-sm;
   }
 
   .choice-card {
-    @apply relative flex items-center gap-4 p-5 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-primary)] cursor-pointer transition-all duration-300 hover:border-red-200 hover:bg-red-50/5 hover:shadow-lg hover:shadow-slate-200/50 active:scale-[0.98];
+    @apply relative flex items-center gap-4 p-5 rounded-2xl border-2 border-[var(--border)] bg-[var(--card-bg)] cursor-pointer transition-all duration-300 hover:border-[var(--hover-selection-border)] hover:bg-[var(--hover-selection-bg)] hover:shadow-lg active:scale-[0.98];
   }
 
   .choice-card-active {
-    @apply border-red-600 bg-red-50/30 dark:bg-red-900/10 shadow-lg shadow-red-500/10;
+    @apply border-[var(--selection-border)] bg-[var(--selection-bg)] shadow-lg;
+  }
+
+  /* Selectable grid card — vehicle / variant / accessory */
+  .select-card {
+    @apply cursor-pointer rounded-xl border-2 border-[var(--border)] bg-[var(--card-bg)] transition-all duration-200
+           hover:border-[var(--hover-selection-border)] hover:bg-[var(--hover-selection-bg)];
+  }
+
+  .select-card-active {
+    @apply border-[var(--selection-border)] bg-[var(--selection-bg)] shadow-lg;
   }
 
   .glass {

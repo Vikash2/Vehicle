@@ -117,10 +117,10 @@ export default function VehicleManagement() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-4">
+      <div className="bg-[var(--card-bg)] rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
+        <div className="p-4 border-b border-[var(--border)] flex gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
             <input 
               type="text" 
               placeholder="Search vehicles..." 
@@ -141,9 +141,9 @@ export default function VehicleManagement() {
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredVehicles.map((vehicle) => (
-                <tr key={vehicle.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                <tr key={vehicle.id} className="hover:bg-[var(--hover-bg)] transition">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img src={vehicle.image} alt={vehicle.model} className="w-12 h-12 rounded-lg object-cover" />
@@ -153,14 +153,14 @@ export default function VehicleManagement() {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-slate-600 dark:text-slate-300">
-                    <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-medium">
+                  <td className="p-4 text-[var(--text-secondary)]">
+                    <span className="px-2 py-1 bg-[var(--bg-tertiary)] rounded text-xs font-medium text-[var(--text-secondary)]">
                       {vehicle.category}
                     </span>
                   </td>
-                  <td className="p-4 text-slate-600 dark:text-slate-300">
+                  <td className="p-4 text-[var(--text-secondary)]">
                     {vehicle.variants.length} variant(s) <br />
-                    <span className="text-xs text-slate-500">From ₹{vehicle.variants[0]?.pricing?.exShowroomPrice?.toLocaleString('en-IN') || 0}</span>
+                    <span className="text-xs text-[var(--text-muted)]">From ₹{vehicle.variants[0]?.pricing?.exShowroomPrice?.toLocaleString('en-IN') || 0}</span>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
@@ -193,9 +193,9 @@ export default function VehicleManagement() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--card-bg)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add Comprehensive Vehicle</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
+            <div className="p-6 border-b border-[var(--border)] flex justify-between items-center shrink-0">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Add Comprehensive Vehicle</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X size={24} />
               </button>
             </div>
@@ -205,101 +205,100 @@ export default function VehicleManagement() {
                 
                 {/* 1. Basic Info */}
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white border-b border-red-500 inline-block mb-4 pb-1">1. Basic Information</h3>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)] border-b border-red-500 inline-block mb-4 pb-1">1. Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Brand</label>
-                      <input name="brand" required value={formData.brand} onChange={handleChange} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 py-2 text-slate-900 dark:text-white" />
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Brand</label>
+                      <input name="brand" required value={formData.brand} onChange={handleChange} type="text" className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text-primary)]" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Model Name</label>
-                      <input name="model" required value={formData.model} onChange={handleChange} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 py-2 text-slate-900 dark:text-white" />
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Model Name</label>
+                      <input name="model" required value={formData.model} onChange={handleChange} type="text" className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text-primary)]" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
-                      <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 py-2 text-slate-900 dark:text-white">
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Category</label>
+                      <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text-primary)]">
                         <option value="Scooter">Scooter</option>
                         <option value="Motorcycle">Motorcycle</option>
                         <option value="Electric">Electric</option>
                       </select>
                     </div>
                     <div className="md:col-span-3">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Image URL</label>
-                      <input name="image" value={formData.image} onChange={handleChange} type="url" className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-4 py-2 text-slate-900 dark:text-white" />
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Image URL</label>
+                      <input name="image" value={formData.image} onChange={handleChange} type="url" className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text-primary)]" />
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Specs */}
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white border-b border-red-500 inline-block mb-4 pb-1">2. Specifications</h3>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)] border-b border-red-500 inline-block mb-4 pb-1">2. Specifications</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                      <div className="md:col-span-2">
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Engine</label>
-                       <input name="engine" value={formData.engine} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Engine</label>
+                       <input name="engine" value={formData.engine} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Mileage</label>
-                       <input name="mileage" value={formData.mileage} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Mileage</label>
+                       <input name="mileage" value={formData.mileage} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Weight</label>
-                       <input name="weight" value={formData.weight} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Weight</label>
+                       <input name="weight" value={formData.weight} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      
-                     {/* More specs */}
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Front Brake</label>
-                       <input name="frontBrake" value={formData.frontBrake} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Front Brake</label>
+                       <input name="frontBrake" value={formData.frontBrake} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Rear Brake</label>
-                       <input name="rearBrake" value={formData.rearBrake} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Rear Brake</label>
+                       <input name="rearBrake" value={formData.rearBrake} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Front Susp.</label>
-                       <input name="frontSuspension" value={formData.frontSuspension} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Front Susp.</label>
+                       <input name="frontSuspension" value={formData.frontSuspension} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Rear Susp.</label>
-                       <input name="rearSuspension" value={formData.rearSuspension} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Rear Susp.</label>
+                       <input name="rearSuspension" value={formData.rearSuspension} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
 
                      <div className="md:col-span-4">
-                       <label className="block text-xs font-medium text-slate-500 mb-1">Key Features (comma separated)</label>
-                       <input name="features" value={formData.features} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                       <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Key Features (comma separated)</label>
+                       <input name="features" value={formData.features} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                   </div>
                 </div>
 
                 {/* 3. Base Variant & Pricing */}
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white border-b border-red-500 inline-block mb-4 pb-1">3. Base Variant & Pricing</h3>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)] border-b border-red-500 inline-block mb-4 pb-1">3. Base Variant & Pricing</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Variant Name</label>
-                        <input name="variantName" required value={formData.variantName} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Variant Name</label>
+                        <input name="variantName" required value={formData.variantName} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Ex-Showroom Price (₹)</label>
-                        <input name="exShowroomPrice" required type="number" value={formData.exShowroomPrice} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 text-sm" />
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Ex-Showroom Price (₹)</label>
+                        <input name="exShowroomPrice" required type="number" value={formData.exShowroomPrice} onChange={handleChange} className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]" />
                      </div>
                      
                      {/* RTO Group */}
-                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
-                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">RTO Charges</h4>
+                     <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border)] shadow-sm">
+                        <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-3">RTO Charges</h4>
                         <div className="grid grid-cols-2 gap-2">
-                           <div><label className="text-[10px] uppercase font-bold text-slate-400">Road Tax</label><input name="roadTax" type="number" value={formData.roadTax} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border-none bg-white dark:bg-slate-900" /></div>
-                           <div><label className="text-[10px] uppercase font-bold text-slate-400">Reg Fee</label><input name="regFee" type="number" value={formData.regFee} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border-none bg-white dark:bg-slate-900" /></div>
+                           <div><label className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Road Tax</label><input name="roadTax" type="number" value={formData.roadTax} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]" /></div>
+                           <div><label className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Reg Fee</label><input name="regFee" type="number" value={formData.regFee} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]" /></div>
                         </div>
                      </div>
 
                      {/* Ins Group */}
-                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
-                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Insurance Options</h4>
+                     <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border)] shadow-sm">
+                        <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-3">Insurance Options</h4>
                         <div className="grid grid-cols-2 gap-2">
-                           <div><label className="text-[10px] uppercase font-bold text-slate-400">Third Party</label><input name="tpInsurance" type="number" value={formData.tpInsurance} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border-none bg-white dark:bg-slate-900" /></div>
-                           <div><label className="text-[10px] uppercase font-bold text-slate-400">Comprehensive</label><input name="compInsurance" type="number" value={formData.compInsurance} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border-none bg-white dark:bg-slate-900" /></div>
+                           <div><label className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Third Party</label><input name="tpInsurance" type="number" value={formData.tpInsurance} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]" /></div>
+                           <div><label className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Comprehensive</label><input name="compInsurance" type="number" value={formData.compInsurance} onChange={handleChange} className="w-full text-sm py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)]" /></div>
                         </div>
                      </div>
                   </div>
@@ -308,8 +307,8 @@ export default function VehicleManagement() {
               </form>
             </div>
 
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0 bg-slate-50 dark:bg-slate-900/50">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition">Cancel</button>
+            <div className="p-4 border-t border-[var(--border)] flex justify-end gap-3 shrink-0 bg-[var(--bg-secondary)]">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded-lg font-medium text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] transition">Cancel</button>
               <button type="submit" form="add-vehicle-form" className="px-6 py-2 rounded-lg font-medium bg-red-600 text-white hover:bg-red-700 transition">Save Complete Vehicle</button>
             </div>
           </div>

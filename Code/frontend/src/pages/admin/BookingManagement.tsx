@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBookings } from '../../state/BookingContext';
 import { useVehicles } from '../../state/VehicleContext';
 import { Search, Filter, Calendar, FileText, X, Download, ShieldCheck, CreditCard, Plus } from 'lucide-react';
@@ -8,6 +9,7 @@ import { BookingSummaryTemplate } from '../../components/admin/DocumentTemplates
 export default function BookingManagement() {
   const { bookings, updateBookingStatus, updateDocumentStatus } = useBookings();
   const { vehicles } = useVehicles();
+  const navigate = useNavigate();
   
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,13 +25,13 @@ export default function BookingManagement() {
 
   const getStatusBadgeColor = (status: BookingStatus) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'Confirmed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Payment Pending': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
-      case 'Payment Complete': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
-      case 'Delivered': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'Cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800';
+      case 'Confirmed': return 'bg-blue-100 text-blue-800';
+      case 'Payment Pending': return 'bg-orange-100 text-orange-800';
+      case 'Payment Complete': return 'bg-emerald-100 text-emerald-800';
+      case 'Delivered': return 'bg-purple-100 text-purple-800';
+      case 'Cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-slate-100 text-slate-800';
     }
   };
 
@@ -66,39 +68,42 @@ export default function BookingManagement() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Booking Management</h1>
           <p className="text-sm text-[var(--text-secondary)] font-medium">Track and manage customer vehicle bookings</p>
         </div>
-        <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20">
+        <button 
+          onClick={() => navigate('new')}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20"
+        >
           <Plus size={20} /> New Booking
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+      <div className="bg-[var(--card-bg)] rounded-xl shadow-sm border border-[var(--border)] p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
             <input 
               type="text" 
               placeholder="Search by name, Booking ID or phone..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] dark:bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-[var(--text-primary)]"
             />
           </div>
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-bold text-sm transition-colors ${showFilters ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800/50' : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-bold text-sm transition-colors ${showFilters ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[var(--card-bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'}`}
           >
             <Filter size={18} /> Advanced Filters
           </button>
         </div>
 
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2">
+          <div className="mt-4 pt-4 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Status</label>
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Status</label>
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]"
               >
                 <option value="All">All Statuses</option>
                 <option value="Pending">Pending</option>
@@ -114,16 +119,16 @@ export default function BookingManagement() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Payment</label>
-              <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Payment</label>
+              <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)} className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]">
                 <option value="All">All Payments</option>
                 <option value="Fully Paid">Fully Paid</option>
                 <option value="Pending Payment">Pending Due</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Vehicle</label>
-              <select value={vehicleFilter} onChange={e => setVehicleFilter(e.target.value)} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Vehicle</label>
+              <select value={vehicleFilter} onChange={e => setVehicleFilter(e.target.value)} className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]">
                 <option value="All">All Models</option>
                 {vehicles.map(v => (
                   <option key={v.id} value={v.id}>{v.brand} {v.model}</option>
@@ -131,8 +136,8 @@ export default function BookingManagement() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Date</label>
-              <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Date</label>
+              <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]">
                 <option value="All">All Time</option>
                 <option value="Today">Today</option>
                 <option value="This Week">This Week</option>
@@ -142,7 +147,7 @@ export default function BookingManagement() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-[var(--card-bg)] rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
@@ -167,7 +172,7 @@ export default function BookingManagement() {
                 >
                   <td className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shrink-0 border border-red-100 dark:border-red-900/50">
+                      <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold shrink-0 border border-red-100">
                         {bk.customer.fullName.charAt(0)}
                       </div>
                       <div>
@@ -182,17 +187,17 @@ export default function BookingManagement() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="text-sm font-bold text-slate-800 dark:text-white">{v?.brand} {v?.model}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{vr?.name} • <span className="text-slate-700 dark:text-slate-300">{bk.vehicleConfig.colorName}</span></div>
+                    <div className="text-sm font-bold text-[var(--text-primary)]">{v?.brand} {v?.model}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">{vr?.name} • <span className="text-[var(--text-secondary)]">{bk.vehicleConfig.colorName}</span></div>
                     {bk.selectedAccessories.length > 0 && (
-                       <div className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 mt-1 rounded inline-block font-medium">
+                       <div className="text-[10px] bg-[var(--bg-tertiary)] text-[var(--text-muted)] px-2 py-0.5 mt-1 rounded inline-block font-medium">
                           +{bk.selectedAccessories.length} Accessories
                        </div>
                     )}
                   </td>
                   <td className="p-4">
-                    <div className="text-sm font-black text-slate-900 dark:text-white">₹{bk.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
-                    <div className="text-xs mt-1 font-medium text-emerald-600 dark:text-emerald-400">Paid: ₹{bk.bookingAmountPaid.toLocaleString('en-IN')}</div>
+                    <div className="text-sm font-black text-[var(--text-primary)]">₹{bk.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
+                    <div className="text-xs mt-1 font-medium text-emerald-600">Paid: ₹{bk.bookingAmountPaid.toLocaleString('en-IN')}</div>
                     {bk.balanceDue > 0 ? (
                        <div className="text-[10px] mt-0.5 uppercase tracking-wider font-bold text-red-500">Due: ₹{bk.balanceDue.toLocaleString('en-IN')}</div>
                     ) : (
@@ -204,7 +209,7 @@ export default function BookingManagement() {
                       <select 
                         value={bk.status}
                         onChange={(e) => updateBookingStatus(bk.id, e.target.value as BookingStatus)}
-                        className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border border-transparent appearance-none cursor-pointer focus:ring-2 focus:ring-offset-1 focus:ring-slate-300 dark:focus:ring-slate-700 focus:outline-none transition-all ${getStatusBadgeColor(bk.status)}`}
+                        className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border border-transparent appearance-none cursor-pointer focus:ring-2 focus:ring-offset-1 focus:ring-slate-300 focus:outline-none transition-all ${getStatusBadgeColor(bk.status)}`}
                       >
                          <option value="Pending">Pending (Dep.)</option>
                          <option value="Confirmed">Confirmed</option>
@@ -222,12 +227,12 @@ export default function BookingManagement() {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition" title="Download Invoice">
+                      <button className="p-2 text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Download Invoice">
                         <Download size={18} />
                       </button>
                       <button 
                         onClick={() => setSelectedBooking(bk)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition" title="View Detail"
+                        className="p-2 text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="View Detail"
                       >
                         <FileText size={18} />
                       </button>
@@ -237,9 +242,9 @@ export default function BookingManagement() {
               )})}
               {filteredBookings.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-slate-500">
+                  <td colSpan={5} className="p-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <CreditCard size={40} className="text-slate-300 dark:text-slate-600" />
+                      <CreditCard size={40} className="text-[var(--text-muted)] opacity-30" />
                       <p>No bookings found matching criteria.</p>
                     </div>
                   </td>
@@ -253,52 +258,58 @@ export default function BookingManagement() {
       {selectedBooking && (
         <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-[2px] z-50 flex items-center justify-end animate-in fade-in duration-200">
           <div className="bg-[var(--card-bg)] h-full w-full max-w-lg shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[var(--border)]">
-            <div className="p-5 border-b border-[var(--border)] flex justify-between items-start bg-[var(--bg-secondary)]">
-              <div>
-                <h2 className="text-xl font-black text-[var(--text-primary)] flex items-center gap-2">
-                   {selectedBooking.id}                 </h2>
-                 <div className="flex items-center gap-2 mt-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${getStatusBadgeColor(selectedBooking.status)}`}>{selectedBooking.status}</span>
-                    <button 
-                      onClick={() => setShowPrintView(true)}
-                      className="flex items-center gap-1.5 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-[0.2em] bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-                    >
-                      <FileText size={10} /> Print Confirmation
-                    </button>
-                 </div>
-                 <p className="text-sm text-slate-500 font-medium mt-1">{selectedBooking.customer.fullName} • Booking Date: {new Date(selectedBooking.date).toLocaleDateString()}</p>
+            <div className="p-5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h2 className="text-xl font-black text-[var(--text-primary)] flex items-center gap-2">
+                     {selectedBooking.id}
+                  </h2>
+                  <p className="text-sm text-[var(--text-muted)] font-medium mt-1">{selectedBooking.customer.fullName} • {new Date(selectedBooking.date).toLocaleDateString()}</p>
+                </div>
+                <button onClick={() => setSelectedBooking(null)} className="p-2 text-[var(--text-muted)] hover:bg-[var(--hover-bg)] rounded-full transition">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={() => setSelectedBooking(null)} className="p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition">
-                <X size={20} />
-              </button>
+              
+              {/* Action Buttons Row */}
+              <div className="flex items-center gap-2 pt-3 border-t border-[var(--border)]">
+                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${getStatusBadgeColor(selectedBooking.status)}`}>{selectedBooking.status}</span>
+                <div className="flex-1"></div>
+                <button 
+                  onClick={() => setShowPrintView(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm bg-red-600 text-white hover:bg-red-700 transition-all shadow-md shadow-red-600/20"
+                >
+                  <FileText size={16} /> View Receipt
+                </button>
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
                <section>
-                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Financial Summary</h3>
-                 <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                    <div className="flex justify-between items-end mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
-                       <span className="text-slate-500 font-bold">Total On-Road Price</span>
-                       <span className="text-2xl font-black text-slate-900 dark:text-white">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
+                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Financial Summary</h3>
+                 <div className="bg-[var(--bg-secondary)] p-5 rounded-xl border border-[var(--border)]">
+                    <div className="flex justify-between items-end mb-4 border-b border-[var(--border)] pb-4">
+                       <span className="text-[var(--text-muted)] font-bold">Total On-Road Price</span>
+                       <span className="text-2xl font-black text-[var(--text-primary)]">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
                     </div>
                     
                     <div className="space-y-3 text-sm font-medium">
-                       <div className="flex justify-between items-center px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded border border-emerald-100 dark:border-emerald-800/50">
+                       <div className="flex justify-between items-center px-3 py-2 bg-emerald-50 text-emerald-700 rounded border border-emerald-100">
                           <span>Amount Paid</span>
                           <span className="font-bold">₹{selectedBooking.bookingAmountPaid.toLocaleString('en-IN')}</span>
                        </div>
-                       <div className="flex justify-between items-center px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded border border-red-100 dark:border-red-800/50">
+                       <div className="flex justify-between items-center px-3 py-2 bg-red-50 text-red-700 rounded border border-red-100">
                           <span>Balance Due</span>
                           <span className="font-bold">₹{selectedBooking.balanceDue.toLocaleString('en-IN')}</span>
                        </div>
                     </div>
                     
-                    <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700">
-                       <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Receipts</div>
+                    <div className="mt-5 pt-4 border-t border-[var(--border)]">
+                       <div className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">Receipts</div>
                        {selectedBooking.payments.map(pay => (
-                          <div key={pay.id} className="flex justify-between items-center text-xs mb-2 text-slate-600 dark:text-slate-400 font-medium">
+                          <div key={pay.id} className="flex justify-between items-center text-xs mb-2 text-[var(--text-secondary)] font-medium">
                              <span>{new Date(pay.date).toLocaleDateString()} • {pay.type} ({pay.method})</span>
-                             <span className="font-bold text-slate-800 dark:text-slate-200">₹{pay.amount.toLocaleString('en-IN')}</span>
+                             <span className="font-bold text-[var(--text-primary)]">₹{pay.amount.toLocaleString('en-IN')}</span>
                           </div>
                        ))}
                     </div>
@@ -306,18 +317,18 @@ export default function BookingManagement() {
                </section>
 
                <section>
-                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Document Checklist (RTO)</h3>
+                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Document Checklist (RTO)</h3>
                  <div className="space-y-3">
                     {Object.entries(selectedBooking.documents).map(([key, status]) => (
-                       <div key={key} className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm">
+                       <div key={key} className="flex justify-between items-center bg-[var(--bg-primary)] border border-[var(--border)] p-3 rounded-lg text-sm font-semibold text-[var(--text-secondary)] shadow-sm">
                           <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                           <select 
                              value={status}
                              onChange={(e) => updateDocumentStatus(selectedBooking.id, key as any, e.target.value as any)}
-                             className={`text-xs font-bold px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none 
-                                ${status === 'Verified' ? 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20' : ''}
-                                ${status === 'Uploaded' ? 'text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20' : ''}
-                                ${status === 'Rejected' ? 'text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20' : ''}
+                             className={`text-xs font-bold px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border)] focus:outline-none 
+                                ${status === 'Verified' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : ''}
+                                ${status === 'Uploaded' ? 'text-blue-600 border-blue-200 bg-blue-50' : ''}
+                                ${status === 'Rejected' ? 'text-red-600 border-red-200 bg-red-50' : ''}
                              `}
                           >
                              <option value="Pending">Pending</option>

@@ -55,8 +55,8 @@ const ThemeToggle = () => {
                                     }}
                                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold transition-all duration-200
                                     ${theme === t.id
-                                            ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
-                                            : 'text-[var(--muted)] hover:bg-[var(--table-row-hover)]'}`}
+                                            ? 'bg-red-600 text-white'
+                                            : 'text-[var(--text-muted)] hover:bg-[var(--hover-bg)]'}`}
                                 >
                                     <t.icon size={16} />
                                     {t.label}

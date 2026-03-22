@@ -119,12 +119,12 @@ export default function ShowroomReports() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
          {/* Detailed Breakdown Card */}
-         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
+         <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--border)] p-8 shadow-sm">
             <div className="flex justify-between items-center mb-8">
-               <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+               <h3 className="text-xl font-black text-[var(--text-primary)] flex items-center gap-2">
                   <BarChart className="text-red-600" /> Model-wise Sales
                </h3>
-               <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold px-3 py-1 text-slate-500 outline-none">
+               <select className="bg-[var(--bg-secondary)] border-none rounded-lg text-xs font-bold px-3 py-1 text-[var(--text-muted)] outline-none">
                   <option>Quantity Sold</option>
                   <option>Revenue Share</option>
                </select>
@@ -149,32 +149,32 @@ export default function ShowroomReports() {
          </div>
 
          {/* Distribution / Recent Highlights */}
-         <div className="bg-gradient-to-br from-slate-900 to-black rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 rounded-full -mr-32 -mt-32 blur-[80px]"></div>
+         <div className="bg-[var(--card-bg)] rounded-3xl p-8 border border-[var(--border)] relative overflow-hidden flex flex-col justify-between shadow-sm">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full -mr-32 -mt-32 blur-[80px]"></div>
             
             <div>
-               <h3 className="text-xl font-black flex items-center gap-2 mb-2">
+               <h3 className="text-xl font-black flex items-center gap-2 mb-2 text-[var(--text-primary)]">
                   <TrendingUp className="text-red-500" /> Goal Completion
                </h3>
-               <p className="text-slate-400 text-sm font-medium">Monthly target of ₹25L Revenue</p>
+               <p className="text-[var(--text-secondary)] text-sm font-medium">Monthly target of ₹25L Revenue</p>
             </div>
 
             <div className="py-12 flex items-center justify-center">
                <div className="relative w-40 h-40">
                   <svg className="w-full h-full transform -rotate-90">
-                     <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-800" />
+                     <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-[var(--bg-tertiary)]" />
                      <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={440} strokeDashoffset={440 - (440 * (totalRevenue / 2500000))} className="text-red-600 transition-all duration-1000" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className="text-3xl font-black">{Math.round((totalRevenue / 2500000) * 100)}%</span>
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Achieved</span>
+                     <span className="text-3xl font-black text-[var(--text-primary)]">{Math.round((totalRevenue / 2500000) * 100)}%</span>
+                     <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Achieved</span>
                   </div>
                </div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-               <p className="text-xs font-bold text-slate-300">Strategy Tip:</p>
-               <p className="text-sm font-medium text-white italic">"High demand for electric models observed in Test Ride patterns. Consider upselling accessories for premium variants."</p>
+            <div className="bg-red-50 backdrop-blur-md rounded-2xl p-4 border border-red-100">
+               <p className="text-xs font-bold text-red-900">Strategy Tip:</p>
+               <p className="text-sm font-medium text-red-800 italic">"High demand for electric models observed in Test Ride patterns. Consider upselling accessories for premium variants."</p>
             </div>
          </div>
       </div>
