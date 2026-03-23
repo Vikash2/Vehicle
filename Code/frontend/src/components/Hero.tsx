@@ -14,39 +14,39 @@ const Hero = () => {
             </div>
 
             <div className="container-custom relative z-10">
-                <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <div className="grid md:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                     >
-                        <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-[var(--foreground)] leading-[0.95] mb-8 tracking-tighter">
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-[var(--foreground)] leading-[0.95] mb-6 sm:mb-8 tracking-tighter">
                             Joy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-400">Riding</span>
                         </h1>
-                        <p className="text-lg md:text-xl text-[var(--muted)] mb-12 max-w-xl leading-relaxed font-medium">
+                        <p className="text-base sm:text-lg md:text-xl text-[var(--muted)] mb-8 sm:mb-12 max-w-xl leading-relaxed font-medium">
                             Discover the latest range of {activeShowroom.brand} 2-wheelers at {activeShowroom.name}. Premium service, unbeatable deals.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-5">
-                            <a href="/#inquiry" className="btn-primary flex items-center justify-center gap-3 text-lg px-8 py-4 shadow-2xl shadow-red-600/20">
-                                Get a Quote <ArrowRight size={20} />
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-5">
+                            <a href="/#inquiry" className="btn-primary flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 shadow-2xl shadow-red-600/20">
+                                Get a Quote <ArrowRight size={18} className="sm:w-5 sm:h-5" />
                             </a>
-                            <a href="/vehicles" className="btn-secondary flex items-center justify-center gap-3 text-lg px-8 py-4">
+                            <a href="/vehicles" className="btn-secondary flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
                                 Explore Catalog
                             </a>
                         </div>
 
-                        <div className="mt-16 grid grid-cols-3 gap-8 pt-12 border-t border-[var(--border)]">
+                        <div className="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 md:gap-8 pt-8 sm:pt-12 border-t border-[var(--border)]">
                             {[
                                 { icon: ShieldCheck, label: 'Verified', sub: 'Authorized Dealer', color: 'text-emerald-500' },
                                 { icon: Clock, label: 'Express', sub: 'Fast Delivery', color: 'text-blue-500' },
                                 { icon: CheckCircle2, label: '1000+', sub: 'Happy Riders', color: 'text-red-500' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-2.5 text-[var(--foreground)] font-black text-lg">
-                                        <item.icon size={22} className={item.color} />
+                                <div key={idx} className="flex flex-col gap-1.5 sm:gap-2">
+                                    <div className="flex items-center gap-2 sm:gap-2.5 text-[var(--foreground)] font-black text-base sm:text-lg">
+                                        <item.icon size={20} className={`${item.color} sm:w-[22px] sm:h-[22px]`} />
                                         <span>{item.label}</span>
                                     </div>
-                                    <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">{item.sub}</p>
+                                    <p className="text-[10px] sm:text-xs font-bold text-[var(--muted)] uppercase tracking-widest">{item.sub}</p>
                                 </div>
                             ))}
                         </div>

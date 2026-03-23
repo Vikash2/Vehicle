@@ -100,7 +100,11 @@ const Navbar = () => {
                             </Link>
                         ))}
                         <div className="pt-2">
-                            <a href="/#inquiry" className="btn-primary w-full block text-center py-3.5 text-base" onClick={() => setIsOpen(false)}>
+                            <a 
+                                href="/#inquiry" 
+                                className="btn-primary w-full block text-center py-3.5 text-base" 
+                                onClick={() => setIsOpen(false)}
+                            >
                                 Book Free Test Ride
                             </a>
                         </div>

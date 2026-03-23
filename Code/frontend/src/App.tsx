@@ -19,6 +19,7 @@ import ShowroomManagement from './pages/admin/ShowroomManagement';
 import VehicleManagement from './pages/admin/VehicleManagement';
 import LeadsManagement from './pages/admin/LeadsManagement';
 import BookingManagement from './pages/admin/BookingManagement';
+import SalesProcessing from './pages/admin/SalesProcessing';
 import AccessoriesManagement from './pages/admin/AccessoriesManagement';
 import ShowroomReports from './pages/admin/ShowroomReports';
 import { ThemeProvider } from './state/ThemeContext';
@@ -290,6 +291,7 @@ function App() {
                         <Route path="leads" element={<LeadsManagement />} />
                         <Route path="bookings" element={<BookingManagement />} />
                         <Route path="bookings/new" element={<BookingFlow />} />
+                        <Route path="sales-processing" element={<SalesProcessing />} />
                         <Route path="accessories" element={<AccessoriesManagement />} />
                         <Route path="reports" element={<ShowroomReports />} />
                         <Route path="settings" element={<div className="p-8 font-bold text-[var(--text-primary)] transition-colors">Settings (Coming Soon)</div>} />

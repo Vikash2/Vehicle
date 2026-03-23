@@ -23,7 +23,8 @@ export type BookingStatus =
   | 'PDI Scheduled' 
   | 'Ready for Delivery' 
   | 'Delivered' 
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'Sales Finalized';
 
 export type PaymentMethod = 'UPI' | 'Credit Card' | 'Debit Card' | 'Net Banking' | 'Cash' | 'Financed';
 
@@ -36,10 +37,17 @@ export interface PaymentRecord {
   type: 'Booking Amount' | 'Balance Payment' | 'Accessory Addition';
 }
 
+export interface DocumentFile {
+  name: string;
+  type: string;
+  data: string; // base64
+  uploadedAt: string;
+}
+
 export interface DocumentStatus {
-  aadharCard: 'Pending' | 'Uploaded' | 'Verified' | 'Rejected';
-  addressProof: 'Pending' | 'Uploaded' | 'Verified' | 'Rejected';
-  passportPhotos: 'Pending' | 'Uploaded' | 'Verified' | 'Rejected';
+  aadharCard: { file?: DocumentFile };
+  addressProof: { file?: DocumentFile };
+  passportPhotos: { file?: DocumentFile };
 }
 
 export interface BookingCustomer {
@@ -54,6 +62,52 @@ export interface SelectedVehicleConfig {
   modelId: string;
   variantId: string;
   colorName: string;
+}
+
+// New interface for final sale details
+export interface FinalSale {
+  soldThrough: 'CASH' | 'FINANCE';
+  financer?: string;
+  financeBy?: string;
+  hypothecationSelected: 'Yes' | 'No';
+  hypothecationCharge: number; // 500 if Yes else 0
+  registration: 'Yes' | 'No';
+  otherState: {
+    selected: string;   // state name
+    amount: number;     // 500 if other state else 0
+  };
+  insurance: 'YES' | 'NO';
+  insuranceType?: string;
+  insuranceNominee: {
+    name: string;
+    age: number;
+    relation: string;
+  };
+  selectedAccessoriesFinal: Record<string, number>; // accessory id -> final amount
+  accessoriesTotal: number;
+  typeOfSale: 'NEW' | 'EXCHANGE';
+  exchange?: {
+    model: string;
+    year: number;
+    value: number;
+    exchangerName: string;
+    registrationNumber: string;
+  };
+  discount: number;
+  specialDiscount: number;
+  specialDiscountApprovalStatus: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  specialDiscountMessage?: string;
+  isGstNumber: 'YES' | 'NO';
+  gstNumber?: string;
+  jobClub: 'YES' | 'NO';
+  otherCharges: number;
+  documents: {
+    aadhaarFront: string | null;   // base64 or file URL
+    aadhaarBack: string | null;
+    pan: string | null;
+    localAadhaarFront: string | null;
+    localAadhaarBack: string | null;
+  };
 }
 
 export interface PricingBreakdown {
@@ -87,4 +141,7 @@ export interface Booking {
   assignedTo?: string; // Sales Executive
   chassisNumber?: string; // Allocated later
   cancellationReason?: string;
+  
+  // Final sale details
+  sale?: FinalSale;
 }

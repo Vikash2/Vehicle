@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Booking, BookingStatus, DocumentStatus, PaymentRecord } from '../types/booking';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import type { Booking, BookingStatus, DocumentStatus, PaymentRecord, FinalSale, DocumentFile } from '../types/booking';
 import { useVehicles } from './VehicleContext';
 
 const STORAGE_KEY = 'showroom-bookings';
@@ -25,7 +25,11 @@ const initialBookings: Booking[] = [
     bookingAmountPaid: 5000,
     balanceDue: 86466,
     status: 'Confirmed',
-    documents: { aadharCard: 'Uploaded', addressProof: 'Pending', passportPhotos: 'Pending' }
+    documents: { 
+      aadharCard: {},
+      addressProof: {},
+      passportPhotos: {}
+    }
   }
 ];
 
@@ -46,9 +50,11 @@ interface BookingContextType {
   bookings: Booking[];
   addBooking: (bookingData: Omit<Booking, 'id' | 'date' | 'status' | 'documents' | 'payments' | 'bookingAmountPaid' | 'balanceDue'>) => string;
   updateBookingStatus: (id: string, status: BookingStatus) => void;
-  updateDocumentStatus: (id: string, docType: keyof DocumentStatus, status: DocumentStatus[keyof DocumentStatus]) => void;
+  uploadDocument: (id: string, docType: keyof DocumentStatus, file: DocumentFile) => void;
+  removeDocument: (id: string, docType: keyof DocumentStatus) => void;
   addPayment: (bookingId: string, payment: Omit<PaymentRecord, 'id' | 'date'>) => void;
   cancelBooking: (id: string, reason: string) => void;
+  updateBookingSale: (bookingId: string, saleData: FinalSale) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -74,7 +80,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       id: newId,
       date: new Date().toISOString(),
       status: 'Pending',
-      documents: { aadharCard: 'Pending', addressProof: 'Pending', passportPhotos: 'Pending' },
+      documents: { 
+        aadharCard: {},
+        addressProof: {},
+        passportPhotos: {}
+      },
       payments: [],
       bookingAmountPaid: 0,
       balanceDue: bookingData.pricing.onRoadPrice
@@ -106,14 +116,20 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const updateDocumentStatus = (id: string, docType: keyof DocumentStatus, status: DocumentStatus[keyof DocumentStatus]) => {
+
+  const uploadDocument = useCallback((id: string, docType: keyof DocumentStatus, file: DocumentFile) => {
     setBookings(prev => prev.map(bk => {
-      if (bk.id === id) {
-        return { ...bk, documents: { ...bk.documents, [docType]: status } };
-      }
-      return bk;
+      if (bk.id !== id) return bk;
+      return { ...bk, documents: { ...bk.documents, [docType]: { file } } };
     }));
-  };
+  }, []);
+
+  const removeDocument = useCallback((id: string, docType: keyof DocumentStatus) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id !== id) return bk;
+      return { ...bk, documents: { ...bk.documents, [docType]: {} } };
+    }));
+  }, []);
 
   const addPayment = (bookingId: string, paymentData: Omit<PaymentRecord, 'id' | 'date'>) => {
     setBookings(prev => prev.map(bk => {
@@ -154,9 +170,21 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setBookings(prev => prev.map(bk => bk.id === id ? { ...bk, status: 'Cancelled', cancellationReason: reason } : bk));
   };
 
+  const updateBookingSale = useCallback(async (bookingId: string, saleData: FinalSale): Promise<void> => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === bookingId) {
+        return {
+          ...bk,
+          sale: saleData
+        };
+      }
+      return bk;
+    }));
+  }, []);
+
   return (
     <BookingContext.Provider value={{
-      bookings, addBooking, updateBookingStatus, updateDocumentStatus, addPayment, cancelBooking
+      bookings, addBooking, updateBookingStatus, uploadDocument, removeDocument, addPayment, cancelBooking, updateBookingSale
     }}>
       {children}
     </BookingContext.Provider>
