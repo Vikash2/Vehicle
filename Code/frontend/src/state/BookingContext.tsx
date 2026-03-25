@@ -27,6 +27,8 @@ const initialBookings: Booking[] = [
     status: 'Confirmed',
     documents: { 
       aadharCard: {},
+      panCard: {},
+      drivingLicense: {},
       addressProof: {},
       passportPhotos: {}
     }
@@ -55,6 +57,7 @@ interface BookingContextType {
   addPayment: (bookingId: string, payment: Omit<PaymentRecord, 'id' | 'date'>) => void;
   cancelBooking: (id: string, reason: string) => void;
   updateBookingSale: (bookingId: string, saleData: FinalSale) => Promise<void>;
+  confirmPayment: (bookingId: string) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -82,6 +85,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       status: 'Pending',
       documents: { 
         aadharCard: {},
+        panCard: {},
+        drivingLicense: {},
         addressProof: {},
         passportPhotos: {}
       },
@@ -182,9 +187,22 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const confirmPayment = useCallback((bookingId: string) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === bookingId) {
+        return {
+          ...bk,
+          paymentConfirmed: true,
+          status: 'Payment Complete'
+        };
+      }
+      return bk;
+    }));
+  }, []);
+
   return (
     <BookingContext.Provider value={{
-      bookings, addBooking, updateBookingStatus, uploadDocument, removeDocument, addPayment, cancelBooking, updateBookingSale
+      bookings, addBooking, updateBookingStatus, uploadDocument, removeDocument, addPayment, cancelBooking, updateBookingSale, confirmPayment
     }}>
       {children}
     </BookingContext.Provider>

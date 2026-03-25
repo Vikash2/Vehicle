@@ -22,6 +22,13 @@ export function calculateOtherStateAmount(selectedState: string, showroomState: 
 }
 
 /**
+ * Calculate Job Club membership charge
+ */
+export function calculateJobClubCharge(jobClub: 'YES' | 'NO'): number {
+  return jobClub === 'YES' ? 1500 : 0; // Assuming ₹1500 for Job Club membership
+}
+
+/**
  * Calculate the grand total for a booking including all sale adjustments
  */
 export function calculateGrandTotal(booking: Booking): number {
@@ -51,7 +58,10 @@ export function calculateGrandTotal(booking: Booking): number {
   // Add other state charge
   total += sale.otherState.amount;
 
-  // Add other charges (job club, etc.)
+  // Add Job Club membership charge
+  total += calculateJobClubCharge(sale.jobClub);
+
+  // Add other charges
   total += sale.otherCharges;
 
   // Subtract exchange value if applicable

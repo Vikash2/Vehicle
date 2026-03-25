@@ -1,68 +1,235 @@
 import { useState, useMemo } from 'react';
 import { useBookings } from '../../state/BookingContext';
 import { useVehicles } from '../../state/VehicleContext';
-import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap } from 'lucide-react';
+import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap, Upload, FileCheck, DollarSign, Truck, CreditCard } from 'lucide-react';
 import type { Booking } from '../../types/booking';
 import DocumentUploadSection from '../../components/Sales/DocumentUploadSection';
+import FinalSalesForm from '../../components/Sales/FinalSalesForm';
 
 export default function SalesProcessing() {
-  const { bookings } = useBookings();
+  const { bookings, updateBookingSale, updateBookingStatus, confirmPayment } = useBookings();
   const { vehicles } = useVehicles();
-  
-  // Filter States
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending Documents' | 'Ready for Sales'>('All');
   const [showFilters, setShowFilters] = useState(false);
-
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modal/Detail State - store only the ID to avoid stale snapshots
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
+  const [salesFormBookingId, setSalesFormBookingId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentBookingId, setPaymentBookingId] = useState<string | null>(null);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
 
-  // Filter bookings that are in sales processing (Confirmed status)
+  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
+  const salesFormBooking = salesFormBookingId ? bookings.find(b => b.id === salesFormBookingId) ?? null : null;
+
   const salesProcessingBookings = useMemo(() => {
-    return bookings.filter(bk => bk.status === 'Confirmed');
+    return bookings.filter(bk => bk.status === 'Confirmed' || bk.status === 'Sales Finalized');
   }, [bookings]);
 
   const areAllDocumentsUploaded = (booking: Booking): boolean => {
     return Object.values(booking.documents).every(doc => !!doc.file);
   };
 
+  const isSalesFormComplete = (booking: Booking): boolean => {
+    if (!booking.sale) return false;
+    
+    const sale = booking.sale;
+    
+    // Check basic required fields
+    if (!sale.soldThrough) return false;
+    if (!sale.registration) return false;
+    if (!sale.insurance) return false;
+    if (!sale.typeOfSale) return false;
+    
+    // Check finance-specific fields
+    if (sale.soldThrough === 'FINANCE') {
+      if (!sale.financer || !sale.financeBy) return false;
+      if (!sale.hypothecationSelected) return false;
+    }
+    
+    // Check insurance-specific fields
+    if (sale.insurance === 'YES') {
+      if (!sale.insuranceType) return false;
+      if (!sale.insuranceNominee.name || !sale.insuranceNominee.age || !sale.insuranceNominee.relation) return false;
+    }
+    
+    // Check exchange-specific fields
+    if (sale.typeOfSale === 'EXCHANGE') {
+      if (!sale.exchange?.model || !sale.exchange?.year || !sale.exchange?.value) return false;
+      if (!sale.exchange?.exchangerName || !sale.exchange?.registrationNumber) return false;
+    }
+    
+    // Check GST fields
+    if (sale.isGstNumber === 'YES' && !sale.gstNumber) return false;
+    
+    return true;
+  };
+
+  const isApprovalPending = (booking: Booking): boolean => {
+    return booking.sale?.specialDiscountApprovalStatus === 'PENDING' || 
+           booking.status === 'Pending Approval';
+  };
+
+  const canProceedToPayment = (booking: Booking): boolean => {
+    // All conditions must be met
+    return areAllDocumentsUploaded(booking) && 
+           isSalesFormComplete(booking) && 
+           booking.status === 'Sales Finalized' &&
+           !isApprovalPending(booking);
+  };
+
+  const getDocumentCount = (booking: Booking) => {
+    const uploaded = Object.values(booking.documents).filter(doc => !!doc.file).length;
+    const total = Object.keys(booking.documents).length;
+    return { uploaded, total };
+  };
+
+  const getOverallProgress = (booking: Booking) => {
+    let completed = 0;
+    const total = 6; // Total steps in the journey
+    
+    // Step 1: Booking Confirmed
+    if (booking.status !== 'Pending') completed++;
+    
+    // Step 2: Documents Uploaded
+    if (areAllDocumentsUploaded(booking)) completed++;
+    
+    // Step 3: Sales Form Complete
+    if (isSalesFormComplete(booking)) completed++;
+    
+    // Step 4: Sales Finalized (no pending approvals)
+    if (booking.status === 'Sales Finalized' && !isApprovalPending(booking)) completed++;
+    
+    // Step 5: Payment Confirmed
+    if (booking.paymentConfirmed) completed++;
+    
+    // Step 6: Delivered
+    if (booking.status === 'Delivered') completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
+
   const filteredBookings = useMemo(() => {
     return salesProcessingBookings.filter(bk => {
-      const matchesSearch = bk.customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            bk.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            bk.customer.mobile.includes(searchTerm);
-      
+      const matchesSearch =
+        bk.customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bk.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bk.customer.mobile.includes(searchTerm);
+
       let matchesStatus = true;
-      if (statusFilter === 'Pending Documents') {
-        matchesStatus = !areAllDocumentsUploaded(bk);
-      } else if (statusFilter === 'Ready for Sales') {
-        matchesStatus = areAllDocumentsUploaded(bk);
-      }
+      if (statusFilter === 'Pending Documents') matchesStatus = !areAllDocumentsUploaded(bk);
+      else if (statusFilter === 'Ready for Sales') matchesStatus = areAllDocumentsUploaded(bk);
 
       return matchesSearch && matchesStatus;
     });
   }, [salesProcessingBookings, searchTerm, statusFilter]);
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
   const paginatedBookings = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredBookings, currentPage, itemsPerPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredBookings.slice(start, start + itemsPerPage);
+  }, [filteredBookings, currentPage]);
 
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  useMemo(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
 
-  const getDocumentStatus = (booking: Booking) => {
-    const verified = Object.values(booking.documents).filter(doc => doc.status === 'Verified').length;
-    const total = Object.keys(booking.documents).length;
-    return { verified, total };
+  const handleProceedToSales = () => {
+    if (!selectedBooking) return;
+    setIsEditMode(false);
+    setSalesFormBookingId(selectedBooking.id);
+    setSelectedBookingId(null);
+  };
+
+  const handleEditSales = () => {
+    if (!selectedBooking) return;
+    setIsEditMode(true);
+    setSalesFormBookingId(selectedBooking.id);
+    setSelectedBookingId(null);
+  };
+
+  const handleSaleSave = async (updatedBooking: Booking) => {
+    if (!updatedBooking.sale) return;
+    await updateBookingSale(updatedBooking.id, updatedBooking.sale);
+    updateBookingStatus(updatedBooking.id, updatedBooking.status);
+    setSalesFormBookingId(null);
+    setIsEditMode(false);
+  };
+
+  const handlePaymentClick = (bookingId: string) => {
+    setPaymentBookingId(bookingId);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentConfirm = () => {
+    if (!paymentBookingId) return;
+    
+    // Update booking with payment confirmation using context method
+    confirmPayment(paymentBookingId);
+    
+    setShowPaymentModal(false);
+    setPaymentBookingId(null);
+    setSelectedBookingId(null);
+    
+    // Show success modal instead of alert
+    setShowPaymentSuccess(true);
+  };
+
+  // Sales Journey Steps
+  const getSalesJourneySteps = (booking: Booking) => {
+    const hasAllDocs = areAllDocumentsUploaded(booking);
+    const hasSaleDetails = !!booking.sale;
+    const isSalesFinalized = booking.status === 'Sales Finalized';
+    const isPaymentConfirmed = booking.paymentConfirmed || false;
+    const isDelivered = booking.status === 'Delivered';
+    
+    const steps = [
+      {
+        id: 1,
+        label: 'Booking Confirmed',
+        icon: CheckCircle,
+        completed: booking.status !== 'Pending',
+        active: booking.status === 'Pending'
+      },
+      {
+        id: 2,
+        label: 'Documents Upload',
+        icon: Upload,
+        completed: hasAllDocs && hasSaleDetails, // Only complete when moved to next step
+        active: !hasAllDocs && booking.status === 'Confirmed'
+      },
+      {
+        id: 3,
+        label: 'Sales Form Completion',
+        icon: FileCheck,
+        completed: hasSaleDetails && isSalesFinalized, // Only complete when finalized
+        active: hasAllDocs && !hasSaleDetails
+      },
+      {
+        id: 4,
+        label: 'Sales Finalized',
+        icon: DollarSign,
+        completed: isSalesFinalized && isPaymentConfirmed, // Only complete when payment done
+        active: hasSaleDetails && !isSalesFinalized
+      },
+      {
+        id: 5,
+        label: 'Payment Processing',
+        icon: CreditCard,
+        completed: isPaymentConfirmed && isDelivered, // Only complete when delivered
+        active: isSalesFinalized && !isPaymentConfirmed
+      },
+      {
+        id: 6,
+        label: 'Ready for Delivery',
+        icon: Truck,
+        completed: isDelivered, // Final step
+        active: isPaymentConfirmed && !isDelivered
+      }
+    ];
+    return steps;
   };
 
   return (
@@ -74,32 +241,32 @@ export default function SalesProcessing() {
         </div>
       </div>
 
+      {/* Search & Filter */}
       <div className="bg-[var(--card-bg)] rounded-xl shadow-sm border border-[var(--border)] p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name, Booking ID or phone..." 
+            <input
+              type="text"
+              placeholder="Search by name, Booking ID or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-[var(--text-primary)]"
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-bold text-sm transition-colors ${showFilters ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[var(--card-bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'}`}
           >
             <Filter size={18} /> Filters
           </button>
         </div>
-
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in slide-in-from-top-2">
+          <div className="mt-4 pt-4 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Document Status</label>
-              <select 
-                value={statusFilter} 
+              <select
+                value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
                 className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]"
               >
@@ -112,17 +279,18 @@ export default function SalesProcessing() {
         )}
       </div>
 
+      {/* Table */}
       <div className="bg-[var(--card-bg)] rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
-        
-        {/* Mobile Card View */}
+
+        {/* Mobile */}
         <div className="block md:hidden divide-y divide-[var(--border)]">
           {paginatedBookings.map((bk) => {
             const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
-            const docStatus = getDocumentStatus(bk);
-            const isReady = areAllDocumentsUploaded(bk);
-            
+            const { uploaded, total } = getDocumentCount(bk);
+            const progress = getOverallProgress(bk);
+            const isReady = canProceedToPayment(bk);
             return (
-              <div key={bk.id} className="p-4 hover:bg-[var(--hover-bg)] transition" onClick={() => setSelectedBookingId(bk.id)}>
+              <div key={bk.id} className="p-4 hover:bg-[var(--hover-bg)] transition cursor-pointer" onClick={() => setSelectedBookingId(bk.id)}>
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold flex-shrink-0 border border-red-100 text-sm">
                     {bk.customer.fullName.charAt(0)}
@@ -136,21 +304,18 @@ export default function SalesProcessing() {
                     {isReady ? 'Ready' : 'Pending'}
                   </span>
                 </div>
-                
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center py-2 border-t border-[var(--border)]">
                     <span className="text-[var(--text-muted)]">Vehicle</span>
-                    <span className="font-bold text-[var(--text-primary)] text-right truncate max-w-[60%]">
-                      {v?.brand} {v?.model}
-                    </span>
+                    <span className="font-bold text-[var(--text-primary)] text-right truncate max-w-[60%]">{v?.brand} {v?.model}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-t border-[var(--border)]">
                     <span className="text-[var(--text-muted)]">Documents</span>
-                    <span className="font-bold text-[var(--text-primary)]">{docStatus.verified}/{docStatus.total}</span>
+                    <span className="font-bold text-[var(--text-primary)]">{uploaded}/{total}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-t border-[var(--border)]">
-                    <span className="text-[var(--text-muted)]">Date</span>
-                    <span className="font-medium text-[var(--text-secondary)]">{new Date(bk.date).toLocaleDateString()}</span>
+                    <span className="text-[var(--text-muted)]">Overall Progress</span>
+                    <span className="font-bold text-[var(--text-primary)]">{progress.percentage}%</span>
                   </div>
                 </div>
               </div>
@@ -164,89 +329,84 @@ export default function SalesProcessing() {
           )}
         </div>
 
-        {/* Desktop Table View */}
+        {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs uppercase tracking-wider">
                 <th className="p-4 font-semibold">Booking Info</th>
                 <th className="p-4 font-semibold">Vehicle</th>
-                <th className="p-4 font-semibold">Document Status</th>
+                <th className="p-4 font-semibold">Documents</th>
                 <th className="p-4 font-semibold">Progress</th>
                 <th className="p-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
               {paginatedBookings.map((bk) => {
-                 const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
-                 const docStatus = getDocumentStatus(bk);
-                 const isReady = areAllDocumentsUploaded(bk);
-                 
-                 return (
-                <tr 
-                  key={bk.id} 
-                  onClick={() => setSelectedBookingId(bk.id)}
-                  className="hover:bg-[var(--hover-bg)] transition cursor-pointer"
-                >
-                  <td className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold shrink-0 border border-red-100">
-                        {bk.customer.fullName.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-[var(--text-primary)]">{bk.id}</div>
-                        <div className="text-xs text-[var(--text-muted)] font-medium">{bk.customer.fullName} • {bk.customer.mobile}</div>
-                        <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
-                          <Calendar size={10} /> {new Date(bk.date).toLocaleDateString()}
+                const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
+                const { uploaded, total } = getDocumentCount(bk);
+                const progress = getOverallProgress(bk);
+                const isReady = canProceedToPayment(bk);
+                return (
+                  <tr key={bk.id} onClick={() => setSelectedBookingId(bk.id)} className="hover:bg-[var(--hover-bg)] transition cursor-pointer">
+                    <td className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold shrink-0 border border-red-100">
+                          {bk.customer.fullName.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-[var(--text-primary)]">{bk.id}</div>
+                          <div className="text-xs text-[var(--text-muted)] font-medium">{bk.customer.fullName} • {bk.customer.mobile}</div>
+                          <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
+                            <Calendar size={10} /> {new Date(bk.date).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="text-sm font-bold text-[var(--text-primary)]">{v?.brand} {v?.model}</div>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">₹{bk.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <div className="text-sm font-bold text-[var(--text-primary)]">{docStatus.verified}/{docStatus.total}</div>
-                        <div className="text-xs text-[var(--text-muted)]">Verified</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm font-bold text-[var(--text-primary)]">{v?.brand} {v?.model}</div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">₹{bk.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <div className="text-sm font-bold text-[var(--text-primary)]">{uploaded}/{total}</div>
+                          <div className="text-xs text-[var(--text-muted)]">Documents</div>
+                        </div>
+                        {isReady ? <CheckCircle size={20} className="text-green-600" /> : <AlertCircle size={20} className="text-orange-600" />}
                       </div>
-                      {isReady ? (
-                        <CheckCircle size={20} className="text-green-600" />
-                      ) : (
-                        <AlertCircle size={20} className="text-yellow-600" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-600 h-2 rounded-full transition-all"
-                        style={{ width: `${(docStatus.verified / docStatus.total) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)] mt-1">{Math.round((docStatus.verified / docStatus.total) * 100)}%</div>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBookingId(bk.id);
-                      }}
-                      className="p-2 text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title="View Details"
-                    >
-                      <FileText size={18} />
-                    </button>
-                  </td>
-                </tr>
-              )})}
+                    </td>
+                    <td className="p-4">
+                      <div className="w-full bg-[var(--bg-secondary)] rounded-full h-2 border border-[var(--border)]">
+                        <div 
+                          className={`h-2 rounded-full transition-all ${
+                            progress.percentage === 100 ? 'bg-green-600' : 
+                            progress.percentage >= 66 ? 'bg-blue-600' : 
+                            progress.percentage >= 33 ? 'bg-yellow-600' : 'bg-orange-600'
+                          }`}
+                          style={{ width: `${progress.percentage}%` }} 
+                        />
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] mt-1">
+                        {progress.completed}/{progress.total} steps • {progress.percentage}%
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedBookingId(bk.id); }}
+                        className="p-2 text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <FileText size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               {paginatedBookings.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <FileText size={40} className="text-[var(--text-muted)] opacity-30" />
+                      <FileText size={40} className="opacity-30" />
                       <p>No bookings in sales processing.</p>
                     </div>
                   </td>
@@ -264,59 +424,25 @@ export default function SalesProcessing() {
             Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-8 h-8 sm:w-10 sm:h-10 text-xs sm:text-sm font-bold rounded-lg transition ${
-                      currentPage === pageNum
-                        ? 'bg-red-600 text-white'
-                        : 'border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Next
-            </button>
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed transition">Previous</button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let p = totalPages <= 5 ? i + 1 : currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
+              return (
+                <button key={p} onClick={() => setCurrentPage(p)} className={`w-8 h-8 sm:w-10 sm:h-10 text-xs sm:text-sm font-bold rounded-lg transition ${currentPage === p ? 'bg-red-600 text-white' : 'border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'}`}>{p}</button>
+              );
+            })}
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed transition">Next</button>
           </div>
         </div>
       )}
 
-      {/* Detail Modal */}
+      {/* Detail Side Panel */}
       {selectedBooking && (
         <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-[2px] z-50 flex items-center justify-end animate-in fade-in duration-200">
           <div className="bg-[var(--card-bg)] h-full w-full max-w-lg shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[var(--border)]">
             <div className="p-5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
                   <h2 className="text-xl font-black text-[var(--text-primary)]">{selectedBooking.id}</h2>
                   <p className="text-sm text-[var(--text-muted)] font-medium mt-1">{selectedBooking.customer.fullName} • {new Date(selectedBooking.date).toLocaleDateString()}</p>
                 </div>
@@ -325,50 +451,273 @@ export default function SalesProcessing() {
                 </button>
               </div>
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-               <DocumentUploadSection booking={selectedBooking} />
 
-               <section>
-                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Booking Summary</h3>
-                 <div className="bg-[var(--bg-secondary)] p-4 rounded-lg space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text-muted)]">Total Price</span>
-                      <span className="font-bold">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text-muted)]">Paid</span>
-                      <span className="font-bold text-emerald-600">₹{selectedBooking.bookingAmountPaid.toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--text-muted)]">Balance</span>
-                      <span className="font-bold text-red-600">₹{selectedBooking.balanceDue.toLocaleString('en-IN')}</span>
-                    </div>
-                 </div>
-               </section>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Sales Journey Progress */}
+              <section>
+                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Sales Journey Progress</h3>
+                <div className="space-y-3">
+                  {getSalesJourneySteps(selectedBooking).map((step, index) => {
+                    const Icon = step.icon;
+                    const isLast = index === getSalesJourneySteps(selectedBooking).length - 1;
+                    
+                    return (
+                      <div key={step.id} className="relative">
+                        <div className="flex items-start gap-3">
+                          <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                            step.completed 
+                              ? 'bg-green-500 text-white' 
+                              : step.active 
+                                ? 'bg-blue-500 text-white animate-pulse' 
+                                : 'bg-[var(--bg-secondary)] border-2 border-[var(--border)] text-[var(--text-muted)]'
+                          }`}>
+                            <Icon size={16} />
+                          </div>
+                          <div className="flex-1 pt-1">
+                            <div className={`text-sm font-semibold ${
+                              step.completed || step.active 
+                                ? 'text-[var(--text-primary)]' 
+                                : 'text-[var(--text-muted)]'
+                            }`}>
+                              {step.label}
+                            </div>
+                            {step.active && (
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 font-medium">In Progress</div>
+                            )}
+                            {step.completed && (
+                              <div className="text-xs text-green-600 dark:text-green-400 mt-0.5 font-medium">Completed</div>
+                            )}
+                          </div>
+                        </div>
+                        {!isLast && (
+                          <div className={`absolute left-4 top-8 w-0.5 h-6 -ml-px transition-all ${
+                            step.completed ? 'bg-green-500' : 'bg-[var(--border)]'
+                          }`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <DocumentUploadSection booking={selectedBooking} />
+
+              <section>
+                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Booking Summary</h3>
+                <div className="bg-[var(--bg-secondary)] p-4 rounded-lg space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Total Price</span>
+                    <span className="font-bold">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Paid</span>
+                    <span className="font-bold text-emerald-600">₹{selectedBooking.bookingAmountPaid.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Balance</span>
+                    <span className="font-bold text-red-600">₹{selectedBooking.balanceDue.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </section>
             </div>
 
-            <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex gap-3">
+            <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col gap-3">
+              {!selectedBooking.sale || !isSalesFormComplete(selectedBooking) ? (
+                // No sales details or incomplete - show proceed to sales
+                <>
+                  <button
+                    onClick={handleProceedToSales}
+                    disabled={!areAllDocumentsUploaded(selectedBooking)}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-600/20"
+                  >
+                    <Zap size={18} />
+                    Proceed to Sales
+                  </button>
+                  {!areAllDocumentsUploaded(selectedBooking) && (
+                    <p className="text-xs text-center text-orange-600 dark:text-orange-400">
+                      ⚠ Please upload all required documents first
+                    </p>
+                  )}
+                  {areAllDocumentsUploaded(selectedBooking) && selectedBooking.sale && !isSalesFormComplete(selectedBooking) && (
+                    <p className="text-xs text-center text-orange-600 dark:text-orange-400">
+                      ⚠ Sales form is incomplete. Please complete all required fields.
+                    </p>
+                  )}
+                </>
+              ) : isApprovalPending(selectedBooking) ? (
+                // Approval pending - show status
+                <>
+                  <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <AlertCircle size={24} className="text-orange-600 dark:text-orange-400 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">Approval Pending</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Special discount requires manager approval</p>
+                  </div>
+                  <button
+                    onClick={handleEditSales}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
+                  >
+                    <FileCheck size={18} />
+                    Edit Sales Details
+                  </button>
+                </>
+              ) : selectedBooking.paymentConfirmed ? (
+                // Payment confirmed - no editing allowed
+                <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                  <CheckCircle size={24} className="text-green-600 dark:text-green-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-green-700 dark:text-green-300">Payment Confirmed</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Sales details are locked</p>
+                </div>
+              ) : canProceedToPayment(selectedBooking) ? (
+                // All complete - show payment and edit options
+                <>
+                  <button
+                    onClick={() => handlePaymentClick(selectedBooking.id)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                  >
+                    <CreditCard size={18} />
+                    Proceed to Payment
+                  </button>
+                  <button
+                    onClick={handleEditSales}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
+                  >
+                    <FileCheck size={18} />
+                    Edit Sales Details
+                  </button>
+                </>
+              ) : (
+                // Sales details exist but not finalized - show edit option
+                <button
+                  onClick={handleEditSales}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
+                >
+                  <FileCheck size={18} />
+                  Edit Sales Details
+                </button>
+              )}
+              
               <button
                 onClick={() => setSelectedBookingId(null)}
-                className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-bold"
+                className="w-full px-4 py-2 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final Sales Form Modal */}
+      {salesFormBooking && (
+        <FinalSalesForm
+          booking={salesFormBooking}
+          onClose={() => {
+            setSalesFormBookingId(null);
+            setIsEditMode(false);
+          }}
+          onSave={handleSaleSave}
+          isEditMode={isEditMode}
+        />
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[var(--card-bg)] rounded-xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mx-auto mb-4">
+              <CreditCard size={32} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
+              Confirm Payment
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+              This is a placeholder for payment integration. In production, this would connect to a payment gateway.
+            </p>
+            
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 p-6 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+              <div className="text-center">
+                <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">
+                  Amount to Pay
+                </div>
+                <div className="text-3xl font-black text-blue-700 dark:text-blue-300">
+                  ₹{paymentBookingId && bookings.find(b => b.id === paymentBookingId)?.pricing.onRoadPrice.toLocaleString('en-IN')}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+              <div className="flex gap-3">
+                <AlertCircle size={20} className="text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                    Important Notice
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                    Once payment is confirmed, sales details cannot be edited. Please ensure all information is correct before proceeding.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
               <button
                 onClick={() => {
-                  if (areAllDocumentsUploaded(selectedBooking)) {
-                    // Navigate to final sales form
-                    setSelectedBookingId(null);
-                  }
+                  setShowPaymentModal(false);
+                  setPaymentBookingId(null);
                 }}
-                disabled={!areAllDocumentsUploaded(selectedBooking)}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
               >
-                <Zap size={18} />
-                Proceed to Sales
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentConfirm}
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+              >
+                <CheckCircle size={18} />
+                Confirm Payment
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Success Modal */}
+      {showPaymentSuccess && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[var(--card-bg)] rounded-xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mx-auto mb-4">
+              <CheckCircle size={40} className="text-green-600 dark:text-green-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
+              Payment Confirmed!
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+              Payment has been successfully confirmed. Sales details are now locked and the booking can proceed to delivery.
+            </p>
+            
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+                    What's Next?
+                  </p>
+                  <ul className="text-xs text-green-700 dark:text-green-300 space-y-1">
+                    <li>• Sales details are now locked</li>
+                    <li>• Booking status updated to "Payment Complete"</li>
+                    <li>• Ready to proceed with RTO and delivery</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowPaymentSuccess(false)}
+              className="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={18} />
+              Got it!
+            </button>
           </div>
         </div>
       )}

@@ -17,6 +17,7 @@ export type BookingStatus =
   | 'Confirmed' 
   | 'Documentation In-Progress' 
   | 'Stock Allocated' 
+  | 'Pending Approval'
   | 'Payment Pending' 
   | 'Payment Complete' 
   | 'RTO Processing' 
@@ -46,6 +47,8 @@ export interface DocumentFile {
 
 export interface DocumentStatus {
   aadharCard: { file?: DocumentFile };
+  panCard: { file?: DocumentFile };
+  drivingLicense: { file?: DocumentFile };
   addressProof: { file?: DocumentFile };
   passportPhotos: { file?: DocumentFile };
 }
@@ -144,4 +147,7 @@ export interface Booking {
   
   // Final sale details
   sale?: FinalSale;
+  
+  // Payment confirmation flag
+  paymentConfirmed?: boolean;
 }

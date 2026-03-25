@@ -2,10 +2,11 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBookings } from '../../state/BookingContext';
 import { useVehicles } from '../../state/VehicleContext';
-import { Search, Filter, Calendar, FileText, X, Download, ShieldCheck, CreditCard, Plus, DollarSign, Zap } from 'lucide-react';
+import { Search, Filter, Calendar, FileText, X, Download, ShieldCheck, CreditCard, Plus, DollarSign } from 'lucide-react';
 import type { BookingStatus, Booking } from '../../types/booking';
 import { BookingSummaryTemplate } from '../../components/admin/DocumentTemplates';
 import FinalSalesForm from '../../components/Sales/FinalSalesForm';
+import DocumentUploadSection from '../../components/Sales/DocumentUploadSection';
 
 export default function BookingManagement() {
   const { bookings, updateBookingStatus, updateBookingSale } = useBookings();
@@ -33,10 +34,12 @@ export default function BookingManagement() {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
       case 'Confirmed': return 'bg-blue-100 text-blue-800';
+      case 'Pending Approval': return 'bg-orange-100 text-orange-800';
       case 'Payment Pending': return 'bg-orange-100 text-orange-800';
       case 'Payment Complete': return 'bg-emerald-100 text-emerald-800';
       case 'Delivered': return 'bg-purple-100 text-purple-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
+      case 'Sales Finalized': return 'bg-green-100 text-green-800';
       default: return 'bg-slate-100 text-slate-800';
     }
   };
@@ -128,6 +131,7 @@ export default function BookingManagement() {
                 <option value="Confirmed">Confirmed</option>
                 <option value="Documentation In-Progress">Documentation</option>
                 <option value="Stock Allocated">Stock Allocated</option>
+                <option value="Pending Approval">Pending Approval</option>
                 <option value="Payment Pending">Payment Pending</option>
                 <option value="Payment Complete">Payment Complete</option>
                 <option value="RTO Processing">RTO Processing</option>
@@ -295,6 +299,7 @@ export default function BookingManagement() {
                          <option value="Confirmed">Confirmed</option>
                          <option value="Documentation In-Progress">Documentation</option>
                          <option value="Stock Allocated">Stock Allocated</option>
+                         <option value="Pending Approval">Pending Approval</option>
                          <option value="Payment Pending">Payment Pending</option>
                          <option value="Payment Complete">Payment Complete</option>
                          <option value="RTO Processing">RTO Processing</option>
@@ -409,14 +414,6 @@ export default function BookingManagement() {
               <div className="flex items-center gap-2 pt-3 border-t border-[var(--border)]">
                 <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${getStatusBadgeColor(selectedBooking.status)}`}>{selectedBooking.status}</span>
                 <div className="flex-1"></div>
-                {selectedBooking.status === 'Confirmed' && (
-                  <button 
-                    onClick={() => navigate('/admin/sales-processing')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-md shadow-purple-600/20"
-                  >
-                    <Zap size={16} /> Process to Sales
-                  </button>
-                )}
                 {(selectedBooking.status === 'Payment Complete' || selectedBooking.status === 'RTO Processing') && (
                   <button 
                     onClick={() => setShowFinalSales(true)}
@@ -436,8 +433,7 @@ export default function BookingManagement() {
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
                <section>
-                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Financial Summary</h3>
-                 <div className="bg-[var(--bg-secondary)] p-5 rounded-xl border border-[var(--border)]">
+                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Financial Summary</h3>                 <div className="bg-[var(--bg-secondary)] p-5 rounded-xl border border-[var(--border)]">
                     <div className="flex justify-between items-end mb-4 border-b border-[var(--border)] pb-4">
                        <span className="text-[var(--text-muted)] font-bold">Total On-Road Price</span>
                        <span className="text-2xl font-black text-[var(--text-primary)]">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
@@ -464,6 +460,11 @@ export default function BookingManagement() {
                        ))}
                     </div>
                  </div>
+               </section>
+
+               <section>
+                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Required Documents</h3>
+                 <DocumentUploadSection booking={selectedBooking} readOnly={true} />
                </section>
             </div>
           </div>
