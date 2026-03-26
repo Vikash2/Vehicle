@@ -26,6 +26,9 @@ export default function FinalSalesForm({ booking, onClose, onSave, isEditMode = 
   const { user } = useAuth();
   const { accessories } = useAccessories();
 
+  // CRITICAL: Block editing if payment is confirmed
+  const isPaymentConfirmed = booking.paymentConfirmed || false;
+
   const [sale, setSale] = useState<FinalSale>(() =>
     booking.sale || getDefaultFinalSale()
   );
@@ -36,6 +39,42 @@ export default function FinalSalesForm({ booking, onClose, onSave, isEditMode = 
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
   const [showApprovalNotice, setShowApprovalNotice] = useState(false);
+
+  // If payment is confirmed, show locked message and prevent editing
+  if (isPaymentConfirmed) {
+    return (
+      <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-md p-6">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
+            <AlertCircle size={32} className="text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
+            Sales Record Locked
+          </h3>
+          <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+            This sales record cannot be edited because payment has been confirmed. Sales details are locked to maintain data integrity.
+          </p>
+          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-200">Payment Confirmed</p>
+                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                  Booking ID: {booking.id}
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-bold"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate totals whenever sale data changes
   const grandTotal = calculateGrandTotal({ ...booking, sale });

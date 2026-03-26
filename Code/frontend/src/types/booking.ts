@@ -150,4 +150,8 @@ export interface Booking {
   
   // Payment confirmation flag
   paymentConfirmed?: boolean;
+  
+  // Delivery confirmation flags
+  deliveryConfirmed?: boolean;
+  deliveryDate?: string;
 }

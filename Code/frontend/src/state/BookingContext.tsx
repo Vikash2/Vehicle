@@ -58,6 +58,7 @@ interface BookingContextType {
   cancelBooking: (id: string, reason: string) => void;
   updateBookingSale: (bookingId: string, saleData: FinalSale) => Promise<void>;
   confirmPayment: (bookingId: string) => void;
+  confirmDelivery: (bookingId: string) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -190,10 +191,26 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const confirmPayment = useCallback((bookingId: string) => {
     setBookings(prev => prev.map(bk => {
       if (bk.id === bookingId) {
+        // CRITICAL FIX: Lock the sales record and update status correctly
         return {
           ...bk,
           paymentConfirmed: true,
-          status: 'Payment Complete'
+          status: 'Payment Complete' // Correct status after payment
+        };
+      }
+      return bk;
+    }));
+  }, []);
+
+  const confirmDelivery = useCallback((bookingId: string) => {
+    setBookings(prev => prev.map(bk => {
+      if (bk.id === bookingId) {
+        // FINAL STEP: Mark delivery as complete and close the sales lifecycle
+        return {
+          ...bk,
+          deliveryConfirmed: true,
+          deliveryDate: new Date().toISOString(),
+          status: 'Delivered' // Final status - sales lifecycle complete
         };
       }
       return bk;
@@ -202,7 +219,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   return (
     <BookingContext.Provider value={{
-      bookings, addBooking, updateBookingStatus, uploadDocument, removeDocument, addPayment, cancelBooking, updateBookingSale, confirmPayment
+      bookings, addBooking, updateBookingStatus, uploadDocument, removeDocument, addPayment, cancelBooking, updateBookingSale, confirmPayment, confirmDelivery
     }}>
       {children}
     </BookingContext.Provider>

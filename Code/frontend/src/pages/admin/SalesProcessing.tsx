@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useBookings } from '../../state/BookingContext';
 import { useVehicles } from '../../state/VehicleContext';
-import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap, Upload, FileCheck, DollarSign, Truck, CreditCard } from 'lucide-react';
-import type { Booking } from '../../types/booking';
+import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap, Upload, FileCheck, DollarSign, Truck, CreditCard, Eye } from 'lucide-react';
+import type { Booking, FinalSale } from '../../types/booking';
 import DocumentUploadSection from '../../components/Sales/DocumentUploadSection';
 import FinalSalesForm from '../../components/Sales/FinalSalesForm';
+import SalesDetailsViewer from '../../components/Sales/SalesDetailsViewer';
+import { downloadSalesDocument } from '../../utils/salesDocumentGenerator';
 
 export default function SalesProcessing() {
-  const { bookings, updateBookingSale, updateBookingStatus, confirmPayment } = useBookings();
+  const { bookings, updateBookingSale, updateBookingStatus, confirmPayment, confirmDelivery } = useBookings();
   const { vehicles } = useVehicles();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,9 +24,14 @@ export default function SalesProcessing() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentBookingId, setPaymentBookingId] = useState<string | null>(null);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [viewSalesBookingId, setViewSalesBookingId] = useState<string | null>(null);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [deliveryBookingId, setDeliveryBookingId] = useState<string | null>(null);
+  const [showDeliverySuccess, setShowDeliverySuccess] = useState(false);
 
   const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
   const salesFormBooking = salesFormBookingId ? bookings.find(b => b.id === salesFormBookingId) ?? null : null;
+  const viewSalesBooking = viewSalesBookingId ? bookings.find(b => b.id === viewSalesBookingId) ?? null : null;
 
   const salesProcessingBookings = useMemo(() => {
     return bookings.filter(bk => bk.status === 'Confirmed' || bk.status === 'Sales Finalized');
@@ -80,6 +87,13 @@ export default function SalesProcessing() {
            isSalesFormComplete(booking) && 
            booking.status === 'Sales Finalized' &&
            !isApprovalPending(booking);
+  };
+
+  const canConfirmDelivery = (booking: Booking): boolean => {
+    // Delivery can only be confirmed when payment is complete and not already delivered
+    return booking.paymentConfirmed === true && 
+           booking.status === 'Payment Complete' &&
+           !booking.deliveryConfirmed;
   };
 
   const getDocumentCount = (booking: Booking) => {
@@ -177,13 +191,69 @@ export default function SalesProcessing() {
     setShowPaymentSuccess(true);
   };
 
-  // Sales Journey Steps
+  const handleViewSalesDetails = () => {
+    if (!selectedBooking) return;
+    setViewSalesBookingId(selectedBooking.id);
+    setSelectedBookingId(null);
+  };
+
+  const handleDownloadSales = () => {
+    if (!viewSalesBooking) return;
+    const vehicle = vehicles.find(v => v.id === viewSalesBooking.vehicleConfig.modelId);
+    const variant = vehicle?.variants.find(v => v.id === viewSalesBooking.vehicleConfig.variantId);
+    const vehicleName = vehicle ? `${vehicle.brand} ${vehicle.model}` : 'Unknown Vehicle';
+    const variantName = variant?.name || 'Unknown Variant';
+    downloadSalesDocument(viewSalesBooking, vehicleName, variantName);
+  };
+
+  const handleApproveSale = () => {
+    if (!viewSalesBooking || !viewSalesBooking.sale) return;
+    const updatedSale: FinalSale = {
+      ...viewSalesBooking.sale,
+      specialDiscountApprovalStatus: 'APPROVED'
+    };
+    updateBookingSale(viewSalesBooking.id, updatedSale);
+    updateBookingStatus(viewSalesBooking.id, 'Sales Finalized');
+    setViewSalesBookingId(null);
+  };
+
+  const handleRejectSale = () => {
+    if (!viewSalesBooking || !viewSalesBooking.sale) return;
+    const updatedSale: FinalSale = {
+      ...viewSalesBooking.sale,
+      specialDiscountApprovalStatus: 'REJECTED'
+    };
+    updateBookingSale(viewSalesBooking.id, updatedSale);
+    updateBookingStatus(viewSalesBooking.id, 'Pending Approval');
+    setViewSalesBookingId(null);
+  };
+
+  const handleDeliveryClick = (bookingId: string) => {
+    setDeliveryBookingId(bookingId);
+    setShowDeliveryModal(true);
+  };
+
+  const handleDeliveryConfirm = () => {
+    if (!deliveryBookingId) return;
+    
+    // Confirm delivery and close the sales lifecycle
+    confirmDelivery(deliveryBookingId);
+    
+    setShowDeliveryModal(false);
+    setDeliveryBookingId(null);
+    setSelectedBookingId(null);
+    
+    // Show success modal
+    setShowDeliverySuccess(true);
+  };
+
+  // Sales Journey Steps - FIXED STATUS FLOW WITH DELIVERY
   const getSalesJourneySteps = (booking: Booking) => {
     const hasAllDocs = areAllDocumentsUploaded(booking);
     const hasSaleDetails = !!booking.sale;
     const isSalesFinalized = booking.status === 'Sales Finalized';
-    const isPaymentConfirmed = booking.paymentConfirmed || false;
-    const isDelivered = booking.status === 'Delivered';
+    const isPaymentComplete = booking.status === 'Payment Complete' || booking.paymentConfirmed;
+    const isDelivered = booking.status === 'Delivered' || booking.deliveryConfirmed;
     
     const steps = [
       {
@@ -197,36 +267,36 @@ export default function SalesProcessing() {
         id: 2,
         label: 'Documents Upload',
         icon: Upload,
-        completed: hasAllDocs && hasSaleDetails, // Only complete when moved to next step
+        completed: hasAllDocs && hasSaleDetails,
         active: !hasAllDocs && booking.status === 'Confirmed'
       },
       {
         id: 3,
         label: 'Sales Form Completion',
         icon: FileCheck,
-        completed: hasSaleDetails && isSalesFinalized, // Only complete when finalized
-        active: hasAllDocs && !hasSaleDetails
+        completed: hasSaleDetails && isSalesFinalized,
+        active: hasAllDocs && !isSalesFinalized
       },
       {
         id: 4,
         label: 'Sales Finalized',
         icon: DollarSign,
-        completed: isSalesFinalized && isPaymentConfirmed, // Only complete when payment done
-        active: hasSaleDetails && !isSalesFinalized
+        completed: isSalesFinalized && isPaymentComplete,
+        active: hasSaleDetails && isSalesFinalized && !isPaymentComplete
       },
       {
         id: 5,
-        label: 'Payment Processing',
+        label: 'Payment Complete',
         icon: CreditCard,
-        completed: isPaymentConfirmed && isDelivered, // Only complete when delivered
-        active: isSalesFinalized && !isPaymentConfirmed
+        completed: isPaymentComplete && isDelivered,
+        active: isSalesFinalized && isPaymentComplete && !isDelivered
       },
       {
         id: 6,
-        label: 'Ready for Delivery',
+        label: 'Vehicle Delivered',
         icon: Truck,
-        completed: isDelivered, // Final step
-        active: isPaymentConfirmed && !isDelivered
+        completed: isDelivered,
+        active: isPaymentComplete && !isDelivered
       }
     ];
     return steps;
@@ -545,7 +615,7 @@ export default function SalesProcessing() {
                   )}
                 </>
               ) : isApprovalPending(selectedBooking) ? (
-                // Approval pending - show status
+                // Approval pending - show status, allow editing before payment
                 <>
                   <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
                     <AlertCircle size={24} className="text-orange-600 dark:text-orange-400 mx-auto mb-2" />
@@ -560,15 +630,45 @@ export default function SalesProcessing() {
                     Edit Sales Details
                   </button>
                 </>
-              ) : selectedBooking.paymentConfirmed ? (
-                // Payment confirmed - no editing allowed
-                <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-                  <CheckCircle size={24} className="text-green-600 dark:text-green-400 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-green-700 dark:text-green-300">Payment Confirmed</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Sales details are locked</p>
-                </div>
+              ) : selectedBooking.paymentConfirmed || selectedBooking.status === 'Payment Complete' ? (
+                // CRITICAL FIX: Payment confirmed - LOCK editing, show view option and delivery
+                <>
+                  {selectedBooking.deliveryConfirmed || selectedBooking.status === 'Delivered' ? (
+                    // Delivery complete - final state
+                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <CheckCircle size={24} className="text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Delivery Complete</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Sales lifecycle closed on {selectedBooking.deliveryDate ? new Date(selectedBooking.deliveryDate).toLocaleDateString('en-IN') : 'N/A'}
+                      </p>
+                    </div>
+                  ) : (
+                    // Payment complete but not delivered yet
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                      <CheckCircle size={24} className="text-green-600 dark:text-green-400 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-green-700 dark:text-green-300">Payment Complete</p>
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">Sales record is locked - ready for delivery</p>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleViewSalesDetails}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                  >
+                    <Eye size={18} />
+                    View Sales Details
+                  </button>
+                  {canConfirmDelivery(selectedBooking) && (
+                    <button
+                      onClick={() => handleDeliveryClick(selectedBooking.id)}
+                      className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                    >
+                      <Truck size={18} />
+                      Confirm Delivery
+                    </button>
+                  )}
+                </>
               ) : canProceedToPayment(selectedBooking) ? (
-                // All complete - show payment and edit options
+                // All complete - show payment and edit options (ONLY before payment)
                 <>
                   <button
                     onClick={() => handlePaymentClick(selectedBooking.id)}
@@ -582,11 +682,23 @@ export default function SalesProcessing() {
                     className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
                   >
                     <FileCheck size={18} />
-                    Edit Sales Details
+                    Edit Sales Details (Before Payment)
                   </button>
+                  <p className="text-xs text-center text-orange-600 dark:text-orange-400">
+                    ⚠ Sales details cannot be edited after payment confirmation
+                  </p>
+                  {selectedBooking.sale && isSalesFormComplete(selectedBooking) && (
+                    <button
+                      onClick={handleViewSalesDetails}
+                      className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition font-bold flex items-center justify-center gap-2"
+                    >
+                      <Eye size={18} />
+                      View Sales Details
+                    </button>
+                  )}
                 </>
               ) : (
-                // Sales details exist but not finalized - show edit option
+                // Sales details exist but not finalized - show edit option (ONLY before payment)
                 <button
                   onClick={handleEditSales}
                   className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
@@ -645,15 +757,15 @@ export default function SalesProcessing() {
               </div>
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
               <div className="flex gap-3">
-                <AlertCircle size={20} className="text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                <AlertCircle size={20} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
-                    Important Notice
+                  <p className="text-sm font-semibold text-red-800 dark:text-red-200 mb-1">
+                    ⚠ Critical Warning
                   </p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    Once payment is confirmed, sales details cannot be edited. Please ensure all information is correct before proceeding.
+                  <p className="text-xs text-red-700 dark:text-red-300 font-semibold">
+                    Once payment is confirmed, the sales record will be PERMANENTLY LOCKED. No edits, modifications, or changes will be allowed. Please verify all details are correct before proceeding.
                   </p>
                 </div>
               </div>
@@ -681,6 +793,120 @@ export default function SalesProcessing() {
         </div>
       )}
 
+      {/* Sales Details Viewer */}
+      {viewSalesBooking && (
+        <SalesDetailsViewer
+          booking={viewSalesBooking}
+          onClose={() => setViewSalesBookingId(null)}
+          onDownload={handleDownloadSales}
+          onApprove={handleApproveSale}
+          onReject={handleRejectSale}
+        />
+      )}
+
+      {/* Delivery Confirmation Modal */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[var(--card-bg)] rounded-xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mx-auto mb-4">
+              <Truck size={32} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
+              Confirm Vehicle Delivery
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+              This is the final step in the sales lifecycle. Once confirmed, the entire sales process will be marked as complete and closed.
+            </p>
+            
+            <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-900/30 p-6 rounded-lg mb-6 border border-emerald-200 dark:border-emerald-800">
+              <div className="text-center">
+                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  Booking ID
+                </div>
+                <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                  {deliveryBookingId && bookings.find(b => b.id === deliveryBookingId)?.id}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+              <div className="flex gap-3">
+                <AlertCircle size={20} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-red-800 dark:text-red-200 mb-1">
+                    ⚠ Final Confirmation
+                  </p>
+                  <p className="text-xs text-red-700 dark:text-red-300">
+                    Once delivery is confirmed, the sales record will be permanently closed. No further modifications will be possible. Please ensure the vehicle has been delivered to the customer.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeliveryModal(false);
+                  setDeliveryBookingId(null);
+                }}
+                className="flex-1 px-4 py-2.5 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeliveryConfirm}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+              >
+                <CheckCircle size={18} />
+                Confirm Delivery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delivery Success Modal */}
+      {showDeliverySuccess && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[var(--card-bg)] rounded-xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mx-auto mb-4">
+              <CheckCircle size={40} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
+              Delivery Confirmed!
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+              Vehicle delivery has been successfully confirmed. The sales lifecycle is now complete and the record has been closed.
+            </p>
+            
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle size={20} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200 mb-1">
+                    Sales Lifecycle Complete
+                  </p>
+                  <ul className="text-xs text-emerald-700 dark:text-emerald-300 space-y-1">
+                    <li>• Status updated to "Delivered"</li>
+                    <li>• Sales record permanently closed</li>
+                    <li>• All data locked and archived</li>
+                    <li>• Customer journey completed successfully</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowDeliverySuccess(false)}
+              className="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={18} />
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Payment Success Modal */}
       {showPaymentSuccess && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
@@ -689,10 +915,10 @@ export default function SalesProcessing() {
               <CheckCircle size={40} className="text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-xl font-bold text-[var(--text-primary)] text-center mb-2">
-              Payment Confirmed!
+              Payment Complete!
             </h3>
             <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
-              Payment has been successfully confirmed. Sales details are now locked and the booking can proceed to delivery.
+              Payment has been successfully confirmed. Sales record is now permanently locked and the booking can proceed to delivery.
             </p>
             
             <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
@@ -700,12 +926,13 @@ export default function SalesProcessing() {
                 <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
-                    What's Next?
+                    Status Updated
                   </p>
                   <ul className="text-xs text-green-700 dark:text-green-300 space-y-1">
-                    <li>• Sales details are now locked</li>
-                    <li>• Booking status updated to "Payment Complete"</li>
-                    <li>• Ready to proceed with RTO and delivery</li>
+                    <li>• Sales record permanently locked</li>
+                    <li>• Status: "Payment Complete"</li>
+                    <li>• No further edits allowed</li>
+                    <li>• Ready for RTO and delivery processing</li>
                   </ul>
                 </div>
               </div>
