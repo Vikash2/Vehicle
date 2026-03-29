@@ -1,14 +1,9 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
+import { auth } from '../config/firebase';
+import * as authService from '../services/authService';
 import type { User, Role, AuthError } from '../types/auth';
-
-const dummyUsers: User[] = [
-  { id: 'u1', fullName: 'Super Admin', email: 'admin@system.com', mobile: '9999999999', role: 'Super Admin' },
-  { id: 'u2', fullName: 'Ramesh Singh', email: 'manager@sandhyahonda.com', mobile: '9876543210', role: 'Showroom Manager', showroomId: 'SH001' },
-  { id: 'u3', fullName: 'Vikash Kumar', email: 'sales1@sandhyahonda.com', mobile: '8765432109', role: 'Sales Executive', showroomId: 'SH001' },
-  { id: 'u4', fullName: 'Ankit Sharma', email: 'accounts@sandhyahonda.com', mobile: '7654321098', role: 'Accountant', showroomId: 'SH001' },
-  { id: 'u5', fullName: 'Priya Patel', email: 'docs@sandhyahonda.com', mobile: '6543210987', role: 'Documentation Officer', showroomId: 'SH001' },
-];
 
 interface AuthContextType {
   user: User | null;
@@ -27,69 +22,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
 
-  // Auto-login logic with session expiry (4 hours)
+  // Listen to Firebase Auth state changes
   useEffect(() => {
-    const checkAuth = () => {
-        const savedAuth = localStorage.getItem('auth_data');
-        if (savedAuth) {
-            try {
-                const { userId, expiry } = JSON.parse(savedAuth);
-                if (Date.now() > expiry) {
-                    logout();
-                    toast.error('Session expired. Please login again.');
-                } else {
-                    const foundUser = dummyUsers.find(u => u.id === userId);
-                    if (foundUser) setUser(foundUser);
-                }
-            } catch (e) {
-                logout();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in, get profile from backend
+        try {
+          const userData = await authService.getCurrentUser();
+          if (userData) {
+            // Check if user is staff (not customer)
+            if (userData.role === 'Customer') {
+              await authService.logout();
+              setUser(null);
+              toast.error('Access denied. Only showroom staff can access this portal.');
+            } else {
+              setUser(userData);
             }
+          } else {
+            // Profile not found in backend
+            await authService.logout();
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          setUser(null);
         }
-        setIsLoading(false);
-    };
-    checkAuth();
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loginWithEmail = async (email: string, password: string): Promise<{ success: boolean; error?: AuthError }> => {
     setIsLoading(true);
     setError(null);
     
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const result = await authService.loginWithEmail(email, password);
     
-    if (password.length < 3) {
-       const err = { code: 'INVALID_PASSWORD', message: 'Password too short', userMessage: 'Password must be at least 3 characters long.' };
-       setError(err);
-       setIsLoading(false);
-       return { success: false, error: err };
-    }
-
-    const foundUser = dummyUsers.find(u => u.email === email);
-    
-    if (!foundUser) {
-        const err = { code: 'USER_NOT_FOUND', message: 'No user found with this email', userMessage: 'Invalid email or password. Please check your credentials.' };
+    if (result.success && result.user) {
+      // Check if user is staff
+      if (result.user.role === 'Customer') {
+        await authService.logout();
+        const err: AuthError = {
+          code: 'UNAUTHORIZED_ROLE',
+          message: 'Non-staff role attempt',
+          userMessage: 'Access denied. Only showroom staff can access this portal.',
+        };
         setError(err);
         setIsLoading(false);
         return { success: false, error: err };
+      }
+      
+      setUser(result.user);
+      setIsLoading(false);
+      return { success: true };
+    } else {
+      setError(result.error || null);
+      setIsLoading(false);
+      return { success: false, error: result.error };
     }
-
-    if (foundUser.role === 'Customer') {
-        const err = { code: 'UNAUTHORIZED_ROLE', message: 'Non-staff role attempt', userMessage: 'Access denied. Only showroom staff can access this portal.' };
-        setError(err);
-        setIsLoading(false);
-        return { success: false, error: err };
-    }
-    
-    setUser(foundUser);
-    const expiry = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
-    localStorage.setItem('auth_data', JSON.stringify({ userId: foundUser.id, expiry }));
-    setIsLoading(false);
-    return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     setError(null);
-    localStorage.removeItem('auth_data');
   };
 
   const hasRole = (allowedRoles: Role[]): boolean => {
