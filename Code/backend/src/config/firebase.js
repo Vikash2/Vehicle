@@ -33,6 +33,7 @@ const initializeFirebase = () => {
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID,
         databaseURL: process.env.FIREBASE_DB_URL,
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       });

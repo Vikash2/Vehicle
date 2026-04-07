@@ -3,7 +3,8 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 
 export const store = configureStore({
     reducer: {
-        // Add reducers here
+        // Placeholder reducer to prevent empty reducer error
+        _placeholder: (state = {}) => state,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat([]),

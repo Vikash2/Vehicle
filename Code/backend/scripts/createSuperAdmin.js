@@ -60,8 +60,16 @@ async function createSuperAdmin() {
     
     if (error.code === "auth/email-already-exists") {
       console.error("This email already exists. Use a different email or delete the existing user first.");
+    } else if (error.message.includes("configuration corresponding to the provided identifier")) {
+      console.error("Firebase Authentication is likely NOT enabled in your Firebase Console.");
+      console.error("👉 Please go to: https://console.firebase.google.com/project/" + (process.env.FIREBASE_PROJECT_ID || "your-project-id") + "/authentication");
+      console.error("And click 'Get Started'.");
+    } else if (error.message.includes("permission to use project")) {
+      console.error("Identity Toolkit API is likely NOT enabled or service account lacks permissions.");
+      console.error("👉 Please go to: https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com");
     } else {
       console.error(error.message);
+      if (error.code) console.error("Error Code:", error.code);
     }
     
     process.exit(1);

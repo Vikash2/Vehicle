@@ -21,12 +21,26 @@ async function authenticate(req, res, next) {
       // Verify the Firebase ID token
       const decodedToken = await auth.verifyIdToken(token);
       
+      let role = decodedToken.role;
+      let showroomId = decodedToken.showroomId;
+
+      // Fallback to RTDB if claims are missing (useful for initial setup or if SDK is blocked)
+      if (!role) {
+        const { db } = require("../config/firebase");
+        const userSnap = await db.ref(`users/${decodedToken.uid}`).once("value");
+        if (userSnap.exists()) {
+          const userData = userSnap.val();
+          role = userData.role;
+          showroomId = userData.showroomId;
+        }
+      }
+
       // Attach user info to request
       req.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
-        role: decodedToken.role || "Sales Executive", // from custom claims
-        showroomId: decodedToken.showroomId || null,
+        role: role || "Sales Executive",
+        showroomId: showroomId || null,
       };
 
       next();

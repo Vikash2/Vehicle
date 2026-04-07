@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, FileText, LogOut, Package, Search, Wrench, Activity, Menu, X, Sun, Moon, Zap } from 'lucide-react';
+import { LayoutDashboard, Store, Users, FileText, LogOut, Package, Search, Wrench, Activity, Menu, X, Sun, Moon, Zap, ShoppingCart } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useShowroom } from '../../state/ShowroomContext';
 import { useTheme } from '../../state/ThemeContext';
@@ -59,6 +59,7 @@ const AdminLayout = () => {
         { icon: Users, label: 'Leads/Inquiries', path: '/admin/leads', roles: ['Super Admin', 'Showroom Manager', 'Sales Executive'] },
         { icon: FileText, label: 'Bookings', path: '/admin/bookings', roles: ['Super Admin', 'Showroom Manager', 'Sales Executive', 'Accountant', 'Documentation Officer'] },
         { icon: Zap, label: 'Sales Processing', path: '/admin/sales-processing', roles: ['Super Admin', 'Showroom Manager', 'Sales Executive', 'Documentation Officer'] },
+        { icon: ShoppingCart, label: 'Direct Sales', path: '/admin/direct-sales', roles: ['Super Admin', 'Showroom Manager', 'Sales Executive'] },
         { icon: Wrench, label: 'Accessories', path: '/admin/accessories', roles: ['Super Admin', 'Showroom Manager', 'Sales Executive'] },
         { icon: Activity, label: 'Reports', path: '/admin/reports', roles: ['Super Admin', 'Showroom Manager', 'Accountant'] },
     ];

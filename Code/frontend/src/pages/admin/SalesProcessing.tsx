@@ -1,167 +1,255 @@
 import { useState, useMemo } from 'react';
 import { useBookings } from '../../state/BookingContext';
+import { useDirectSales } from '../../state/DirectSaleContext';
 import { useVehicles } from '../../state/VehicleContext';
-import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap, Upload, FileCheck, DollarSign, Truck, CreditCard, Eye } from 'lucide-react';
+import { Search, Filter, Calendar, FileText, X, CheckCircle, AlertCircle, Zap, Upload, FileCheck, DollarSign, Truck, CreditCard, Eye, ShoppingCart } from 'lucide-react';
 import type { Booking, FinalSale } from '../../types/booking';
+import type { DirectSaleRecord } from '../../types/directSale';
 import DocumentUploadSection from '../../components/Sales/DocumentUploadSection';
 import FinalSalesForm from '../../components/Sales/FinalSalesForm';
+import DirectSalesForm from '../../components/Sales/DirectSalesForm';
 import SalesDetailsViewer from '../../components/Sales/SalesDetailsViewer';
 import { downloadSalesDocument } from '../../utils/salesDocumentGenerator';
 
+// Unified sale type for display
+type UnifiedSaleDisplay = {
+  id: string;
+  source: 'BOOKING' | 'DIRECT';
+  customer: {
+    fullName: string;
+    mobile: string;
+  };
+  date: string;
+  status: string;
+  pricing: {
+    onRoadPrice: number;
+  };
+  vehicleConfig: {
+    modelId: string;
+    variantId: string;
+  };
+  documents: any;
+  sale?: any;
+  saleDetails?: any;
+  paymentConfirmed?: boolean;
+  deliveryConfirmed?: boolean;
+  bookingAmountPaid?: number;
+  balanceDue?: number;
+};
+
 export default function SalesProcessing() {
   const { bookings, updateBookingSale, updateBookingStatus, confirmPayment, confirmDelivery } = useBookings();
+  const { directSales, updateDirectSale, confirmPayment: confirmDirectPayment, confirmDelivery: confirmDirectDelivery } = useDirectSales();
   const { vehicles } = useVehicles();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending Documents' | 'Ready for Sales'>('All');
+  const [sourceFilter, setSourceFilter] = useState<'All' | 'Booking' | 'Direct'>('All');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [selectedSaleSource, setSelectedSaleSource] = useState<'BOOKING' | 'DIRECT' | null>(null);
   const [salesFormBookingId, setSalesFormBookingId] = useState<string | null>(null);
+  const [salesFormDirectId, setSalesFormDirectId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentBookingId, setPaymentBookingId] = useState<string | null>(null);
+  const [paymentSaleId, setPaymentSaleId] = useState<string | null>(null);
+  const [paymentSaleSource, setPaymentSaleSource] = useState<'BOOKING' | 'DIRECT' | null>(null);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [viewSalesBookingId, setViewSalesBookingId] = useState<string | null>(null);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
-  const [deliveryBookingId, setDeliveryBookingId] = useState<string | null>(null);
+  const [deliverySaleId, setDeliverySaleId] = useState<string | null>(null);
+  const [deliverySaleSource, setDeliverySaleSource] = useState<'BOOKING' | 'DIRECT' | null>(null);
   const [showDeliverySuccess, setShowDeliverySuccess] = useState(false);
 
-  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
+  // Convert bookings and direct sales to unified format
+  const unifiedSales = useMemo((): UnifiedSaleDisplay[] => {
+    const bookingSales: UnifiedSaleDisplay[] = bookings
+      .filter(bk => bk.status === 'Confirmed' || bk.status === 'Sales Finalized' || bk.status === 'Payment Complete' || bk.status === 'Delivered')
+      .map(bk => ({
+        id: bk.id,
+        source: 'BOOKING' as const,
+        customer: bk.customer,
+        date: bk.date,
+        status: bk.status,
+        pricing: bk.pricing,
+        vehicleConfig: bk.vehicleConfig,
+        documents: bk.documents,
+        sale: bk.sale,
+        paymentConfirmed: bk.paymentConfirmed,
+        deliveryConfirmed: bk.deliveryConfirmed,
+        bookingAmountPaid: bk.bookingAmountPaid,
+        balanceDue: bk.balanceDue,
+      }));
+
+    const directSalesList: UnifiedSaleDisplay[] = directSales
+      .filter(ds => ds.status === 'Draft' || ds.status === 'Sales Finalized' || ds.status === 'Payment Complete' || ds.status === 'Delivered')
+      .map(ds => ({
+        id: ds.id,
+        source: 'DIRECT' as const,
+        customer: ds.customer,
+        date: ds.date,
+        status: ds.status,
+        pricing: ds.pricing,
+        vehicleConfig: ds.vehicleConfig,
+        documents: ds.documents,
+        saleDetails: ds.saleDetails,
+        paymentConfirmed: ds.paymentConfirmed,
+        deliveryConfirmed: ds.deliveryConfirmed,
+      }));
+
+    return [...bookingSales, ...directSalesList].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [bookings, directSales]);
+
+  const selectedSale = selectedSaleId && selectedSaleSource
+    ? unifiedSales.find(s => s.id === selectedSaleId && s.source === selectedSaleSource) ?? null
+    : null;
   const salesFormBooking = salesFormBookingId ? bookings.find(b => b.id === salesFormBookingId) ?? null : null;
   const viewSalesBooking = viewSalesBookingId ? bookings.find(b => b.id === viewSalesBookingId) ?? null : null;
 
-  const salesProcessingBookings = useMemo(() => {
-    return bookings.filter(bk => bk.status === 'Confirmed' || bk.status === 'Sales Finalized');
-  }, [bookings]);
-
-  const areAllDocumentsUploaded = (booking: Booking): boolean => {
-    return Object.values(booking.documents).every(doc => !!doc.file);
+  const areAllDocumentsUploaded = (sale: UnifiedSaleDisplay): boolean => {
+    return Object.values(sale.documents).every(doc => !!doc.file);
   };
 
-  const isSalesFormComplete = (booking: Booking): boolean => {
-    if (!booking.sale) return false;
-    
-    const sale = booking.sale;
+  const isSalesFormComplete = (sale: UnifiedSaleDisplay): boolean => {
+    const saleData = sale.source === 'BOOKING' ? sale.sale : sale.saleDetails;
+    if (!saleData) return false;
     
     // Check basic required fields
-    if (!sale.soldThrough) return false;
-    if (!sale.registration) return false;
-    if (!sale.insurance) return false;
-    if (!sale.typeOfSale) return false;
+    if (!saleData.soldThrough) return false;
+    if (!saleData.registration) return false;
+    if (!saleData.insurance) return false;
+    if (!saleData.typeOfSale) return false;
     
     // Check finance-specific fields
-    if (sale.soldThrough === 'FINANCE') {
-      if (!sale.financer || !sale.financeBy) return false;
-      if (!sale.hypothecationSelected) return false;
+    if (saleData.soldThrough === 'FINANCE') {
+      if (!saleData.financer || !saleData.financeBy) return false;
+      if (!saleData.hypothecationSelected) return false;
     }
     
     // Check insurance-specific fields
-    if (sale.insurance === 'YES') {
-      if (!sale.insuranceType) return false;
-      if (!sale.insuranceNominee.name || !sale.insuranceNominee.age || !sale.insuranceNominee.relation) return false;
+    if (saleData.insurance === 'YES') {
+      if (!saleData.insuranceType) return false;
+      if (!saleData.insuranceNominee.name || !saleData.insuranceNominee.age || !saleData.insuranceNominee.relation) return false;
     }
     
     // Check exchange-specific fields
-    if (sale.typeOfSale === 'EXCHANGE') {
-      if (!sale.exchange?.model || !sale.exchange?.year || !sale.exchange?.value) return false;
-      if (!sale.exchange?.exchangerName || !sale.exchange?.registrationNumber) return false;
+    if (saleData.typeOfSale === 'EXCHANGE') {
+      if (!saleData.exchange?.model || !saleData.exchange?.year || !saleData.exchange?.value) return false;
+      if (!saleData.exchange?.exchangerName || !saleData.exchange?.registrationNumber) return false;
     }
     
     // Check GST fields
-    if (sale.isGstNumber === 'YES' && !sale.gstNumber) return false;
+    if (saleData.isGstNumber === 'YES' && !saleData.gstNumber) return false;
     
     return true;
   };
 
-  const isApprovalPending = (booking: Booking): boolean => {
-    return booking.sale?.specialDiscountApprovalStatus === 'PENDING' || 
-           booking.status === 'Pending Approval';
+  const isApprovalPending = (sale: UnifiedSaleDisplay): boolean => {
+    const saleData = sale.source === 'BOOKING' ? sale.sale : sale.saleDetails;
+    return saleData?.specialDiscountApprovalStatus === 'PENDING' || 
+           sale.status === 'Pending Approval';
   };
 
-  const canProceedToPayment = (booking: Booking): boolean => {
+  const canProceedToPayment = (sale: UnifiedSaleDisplay): boolean => {
     // All conditions must be met
-    return areAllDocumentsUploaded(booking) && 
-           isSalesFormComplete(booking) && 
-           booking.status === 'Sales Finalized' &&
-           !isApprovalPending(booking);
+    return areAllDocumentsUploaded(sale) && 
+           isSalesFormComplete(sale) && 
+           sale.status === 'Sales Finalized' &&
+           !isApprovalPending(sale);
   };
 
-  const canConfirmDelivery = (booking: Booking): boolean => {
+  const canConfirmDelivery = (sale: UnifiedSaleDisplay): boolean => {
     // Delivery can only be confirmed when payment is complete and not already delivered
-    return booking.paymentConfirmed === true && 
-           booking.status === 'Payment Complete' &&
-           !booking.deliveryConfirmed;
+    return sale.paymentConfirmed === true && 
+           sale.status === 'Payment Complete' &&
+           !sale.deliveryConfirmed;
   };
 
-  const getDocumentCount = (booking: Booking) => {
-    const uploaded = Object.values(booking.documents).filter(doc => !!doc.file).length;
-    const total = Object.keys(booking.documents).length;
+  const getDocumentCount = (sale: UnifiedSaleDisplay) => {
+    const uploaded = Object.values(sale.documents).filter(doc => !!doc.file).length;
+    const total = Object.keys(sale.documents).length;
     return { uploaded, total };
   };
 
-  const getOverallProgress = (booking: Booking) => {
+  const getOverallProgress = (sale: UnifiedSaleDisplay) => {
     let completed = 0;
     const total = 6; // Total steps in the journey
     
-    // Step 1: Booking Confirmed
-    if (booking.status !== 'Pending') completed++;
+    // Step 1: Booking/Sale Created
+    if (sale.status !== 'Pending' && sale.status !== 'Draft') completed++;
     
     // Step 2: Documents Uploaded
-    if (areAllDocumentsUploaded(booking)) completed++;
+    if (areAllDocumentsUploaded(sale)) completed++;
     
     // Step 3: Sales Form Complete
-    if (isSalesFormComplete(booking)) completed++;
+    if (isSalesFormComplete(sale)) completed++;
     
     // Step 4: Sales Finalized (no pending approvals)
-    if (booking.status === 'Sales Finalized' && !isApprovalPending(booking)) completed++;
+    if (sale.status === 'Sales Finalized' && !isApprovalPending(sale)) completed++;
     
     // Step 5: Payment Confirmed
-    if (booking.paymentConfirmed) completed++;
+    if (sale.paymentConfirmed) completed++;
     
     // Step 6: Delivered
-    if (booking.status === 'Delivered') completed++;
+    if (sale.status === 'Delivered') completed++;
     
     return { completed, total, percentage: Math.round((completed / total) * 100) };
   };
 
-  const filteredBookings = useMemo(() => {
-    return salesProcessingBookings.filter(bk => {
+  const filteredSales = useMemo(() => {
+    return unifiedSales.filter(sale => {
       const matchesSearch =
-        bk.customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bk.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bk.customer.mobile.includes(searchTerm);
+        sale.customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.customer.mobile.includes(searchTerm);
 
       let matchesStatus = true;
-      if (statusFilter === 'Pending Documents') matchesStatus = !areAllDocumentsUploaded(bk);
-      else if (statusFilter === 'Ready for Sales') matchesStatus = areAllDocumentsUploaded(bk);
+      if (statusFilter === 'Pending Documents') matchesStatus = !areAllDocumentsUploaded(sale);
+      else if (statusFilter === 'Ready for Sales') matchesStatus = areAllDocumentsUploaded(sale);
 
-      return matchesSearch && matchesStatus;
+      let matchesSource = true;
+      if (sourceFilter === 'Booking') matchesSource = sale.source === 'BOOKING';
+      else if (sourceFilter === 'Direct') matchesSource = sale.source === 'DIRECT';
+
+      return matchesSearch && matchesStatus && matchesSource;
     });
-  }, [salesProcessingBookings, searchTerm, statusFilter]);
+  }, [unifiedSales, searchTerm, statusFilter, sourceFilter]);
 
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
-  const paginatedBookings = useMemo(() => {
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const paginatedSales = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredBookings.slice(start, start + itemsPerPage);
-  }, [filteredBookings, currentPage]);
+    return filteredSales.slice(start, start + itemsPerPage);
+  }, [filteredSales, currentPage]);
 
-  useMemo(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
+  useMemo(() => { setCurrentPage(1); }, [searchTerm, statusFilter, sourceFilter]);
 
   const handleProceedToSales = () => {
-    if (!selectedBooking) return;
+    if (!selectedSale) return;
     setIsEditMode(false);
-    setSalesFormBookingId(selectedBooking.id);
-    setSelectedBookingId(null);
+    if (selectedSale.source === 'BOOKING') {
+      setSalesFormBookingId(selectedSale.id);
+    } else {
+      setSalesFormDirectId(selectedSale.id);
+    }
+    setSelectedSaleId(null);
+    setSelectedSaleSource(null);
   };
 
   const handleEditSales = () => {
-    if (!selectedBooking) return;
+    if (!selectedSale) return;
     setIsEditMode(true);
-    setSalesFormBookingId(selectedBooking.id);
-    setSelectedBookingId(null);
+    if (selectedSale.source === 'BOOKING') {
+      setSalesFormBookingId(selectedSale.id);
+    } else {
+      setSalesFormDirectId(selectedSale.id);
+    }
+    setSelectedSaleId(null);
+    setSelectedSaleSource(null);
   };
 
   const handleSaleSave = async (updatedBooking: Booking) => {
@@ -172,29 +260,42 @@ export default function SalesProcessing() {
     setIsEditMode(false);
   };
 
-  const handlePaymentClick = (bookingId: string) => {
-    setPaymentBookingId(bookingId);
+  const handleDirectSaleSave = async () => {
+    setSalesFormDirectId(null);
+    setIsEditMode(false);
+  };
+
+  const handlePaymentClick = (saleId: string, source: 'BOOKING' | 'DIRECT') => {
+    setPaymentSaleId(saleId);
+    setPaymentSaleSource(source);
     setShowPaymentModal(true);
   };
 
   const handlePaymentConfirm = () => {
-    if (!paymentBookingId) return;
+    if (!paymentSaleId || !paymentSaleSource) return;
     
-    // Update booking with payment confirmation using context method
-    confirmPayment(paymentBookingId);
+    // Update sale with payment confirmation
+    if (paymentSaleSource === 'BOOKING') {
+      confirmPayment(paymentSaleId);
+    } else {
+      confirmDirectPayment(paymentSaleId);
+    }
     
     setShowPaymentModal(false);
-    setPaymentBookingId(null);
-    setSelectedBookingId(null);
+    setPaymentSaleId(null);
+    setPaymentSaleSource(null);
+    setSelectedSaleId(null);
+    setSelectedSaleSource(null);
     
-    // Show success modal instead of alert
+    // Show success modal
     setShowPaymentSuccess(true);
   };
 
   const handleViewSalesDetails = () => {
-    if (!selectedBooking) return;
-    setViewSalesBookingId(selectedBooking.id);
-    setSelectedBookingId(null);
+    if (!selectedSale || selectedSale.source !== 'BOOKING') return;
+    setViewSalesBookingId(selectedSale.id);
+    setSelectedSaleId(null);
+    setSelectedSaleSource(null);
   };
 
   const handleDownloadSales = () => {
@@ -228,47 +329,54 @@ export default function SalesProcessing() {
     setViewSalesBookingId(null);
   };
 
-  const handleDeliveryClick = (bookingId: string) => {
-    setDeliveryBookingId(bookingId);
+  const handleDeliveryClick = (saleId: string, source: 'BOOKING' | 'DIRECT') => {
+    setDeliverySaleId(saleId);
+    setDeliverySaleSource(source);
     setShowDeliveryModal(true);
   };
 
   const handleDeliveryConfirm = () => {
-    if (!deliveryBookingId) return;
+    if (!deliverySaleId || !deliverySaleSource) return;
     
     // Confirm delivery and close the sales lifecycle
-    confirmDelivery(deliveryBookingId);
+    if (deliverySaleSource === 'BOOKING') {
+      confirmDelivery(deliverySaleId);
+    } else {
+      confirmDirectDelivery(deliverySaleId);
+    }
     
     setShowDeliveryModal(false);
-    setDeliveryBookingId(null);
-    setSelectedBookingId(null);
+    setDeliverySaleId(null);
+    setDeliverySaleSource(null);
+    setSelectedSaleId(null);
+    setSelectedSaleSource(null);
     
     // Show success modal
     setShowDeliverySuccess(true);
   };
 
   // Sales Journey Steps - FIXED STATUS FLOW WITH DELIVERY
-  const getSalesJourneySteps = (booking: Booking) => {
-    const hasAllDocs = areAllDocumentsUploaded(booking);
-    const hasSaleDetails = !!booking.sale;
-    const isSalesFinalized = booking.status === 'Sales Finalized';
-    const isPaymentComplete = booking.status === 'Payment Complete' || booking.paymentConfirmed;
-    const isDelivered = booking.status === 'Delivered' || booking.deliveryConfirmed;
+  const getSalesJourneySteps = (sale: UnifiedSaleDisplay) => {
+    const hasAllDocs = areAllDocumentsUploaded(sale);
+    const hasSaleDetails = sale.source === 'BOOKING' ? !!sale.sale : !!sale.saleDetails;
+    const isSalesFinalized = sale.status === 'Sales Finalized';
+    const isPaymentComplete = sale.status === 'Payment Complete' || sale.paymentConfirmed;
+    const isDelivered = sale.status === 'Delivered' || sale.deliveryConfirmed;
     
     const steps = [
       {
         id: 1,
-        label: 'Booking Confirmed',
-        icon: CheckCircle,
-        completed: booking.status !== 'Pending',
-        active: booking.status === 'Pending'
+        label: sale.source === 'BOOKING' ? 'Booking Confirmed' : 'Direct Sale Created',
+        icon: sale.source === 'BOOKING' ? CheckCircle : ShoppingCart,
+        completed: sale.status !== 'Pending' && sale.status !== 'Draft',
+        active: sale.status === 'Pending' || sale.status === 'Draft'
       },
       {
         id: 2,
         label: 'Documents Upload',
         icon: Upload,
         completed: hasAllDocs && hasSaleDetails,
-        active: !hasAllDocs && booking.status === 'Confirmed'
+        active: !hasAllDocs && (sale.status === 'Confirmed' || sale.status === 'Draft')
       },
       {
         id: 3,
@@ -332,7 +440,7 @@ export default function SalesProcessing() {
           </button>
         </div>
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mt-4 pt-4 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Document Status</label>
               <select
@@ -345,6 +453,18 @@ export default function SalesProcessing() {
                 <option value="Ready for Sales">Ready for Sales</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Sale Source</label>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value as any)}
+                className="w-full px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)]"
+              >
+                <option value="All">All Sources</option>
+                <option value="Booking">Booking-Based</option>
+                <option value="Direct">Direct Sales</option>
+              </select>
+            </div>
           </div>
         )}
       </div>
@@ -354,25 +474,36 @@ export default function SalesProcessing() {
 
         {/* Mobile */}
         <div className="block md:hidden divide-y divide-[var(--border)]">
-          {paginatedBookings.map((bk) => {
-            const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
-            const { uploaded, total } = getDocumentCount(bk);
-            const progress = getOverallProgress(bk);
-            const isReady = canProceedToPayment(bk);
+          {paginatedSales.map((sale) => {
+            const v = vehicles.find(v => v.id === sale.vehicleConfig.modelId);
+            const { uploaded, total } = getDocumentCount(sale);
+            const progress = getOverallProgress(sale);
+            const isReady = canProceedToPayment(sale);
             return (
-              <div key={bk.id} className="p-4 hover:bg-[var(--hover-bg)] transition cursor-pointer" onClick={() => setSelectedBookingId(bk.id)}>
+              <div key={`${sale.source}-${sale.id}`} className="p-4 hover:bg-[var(--hover-bg)] transition cursor-pointer" onClick={() => { setSelectedSaleId(sale.id); setSelectedSaleSource(sale.source); }}>
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold flex-shrink-0 border border-red-100 text-sm">
-                    {bk.customer.fullName.charAt(0)}
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold flex-shrink-0 border text-sm ${
+                    sale.source === 'DIRECT' 
+                      ? 'bg-purple-50 text-purple-600 border-purple-100' 
+                      : 'bg-red-50 text-red-600 border-red-100'
+                  }`}>
+                    {sale.source === 'DIRECT' ? <ShoppingCart size={18} /> : sale.customer.fullName.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-[var(--text-primary)] truncate">{bk.id}</div>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate">{bk.customer.fullName}</div>
-                    <div className="text-xs text-[var(--text-muted)] truncate">{bk.customer.mobile}</div>
+                    <div className="font-bold text-sm text-[var(--text-primary)] truncate">{sale.id}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate">{sale.customer.fullName}</div>
+                    <div className="text-xs text-[var(--text-muted)] truncate">{sale.customer.mobile}</div>
                   </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-full font-bold whitespace-nowrap ${isReady ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {isReady ? 'Ready' : 'Pending'}
-                  </span>
+                  <div className="flex flex-col gap-1 items-end">
+                    <span className={`text-[9px] px-2 py-1 rounded-full font-bold whitespace-nowrap ${isReady ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {isReady ? 'Ready' : 'Pending'}
+                    </span>
+                    <span className={`text-[9px] px-2 py-1 rounded-full font-bold whitespace-nowrap ${
+                      sale.source === 'DIRECT' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {sale.source === 'DIRECT' ? 'Direct' : 'Booking'}
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center py-2 border-t border-[var(--border)]">
@@ -391,10 +522,10 @@ export default function SalesProcessing() {
               </div>
             );
           })}
-          {paginatedBookings.length === 0 && (
+          {paginatedSales.length === 0 && (
             <div className="p-8 text-center text-slate-500 text-sm">
               <FileText size={32} className="mx-auto mb-2 opacity-30" />
-              <p>No bookings in sales processing.</p>
+              <p>No sales in processing.</p>
             </div>
           )}
         </div>
@@ -412,30 +543,41 @@ export default function SalesProcessing() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {paginatedBookings.map((bk) => {
-                const v = vehicles.find(v => v.id === bk.vehicleConfig.modelId);
-                const { uploaded, total } = getDocumentCount(bk);
-                const progress = getOverallProgress(bk);
-                const isReady = canProceedToPayment(bk);
+              {paginatedSales.map((sale) => {
+                const v = vehicles.find(v => v.id === sale.vehicleConfig.modelId);
+                const { uploaded, total } = getDocumentCount(sale);
+                const progress = getOverallProgress(sale);
+                const isReady = canProceedToPayment(sale);
                 return (
-                  <tr key={bk.id} onClick={() => setSelectedBookingId(bk.id)} className="hover:bg-[var(--hover-bg)] transition cursor-pointer">
+                  <tr key={`${sale.source}-${sale.id}`} onClick={() => { setSelectedSaleId(sale.id); setSelectedSaleSource(sale.source); }} className="hover:bg-[var(--hover-bg)] transition cursor-pointer">
                     <td className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold shrink-0 border border-red-100">
-                          {bk.customer.fullName.charAt(0)}
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 border ${
+                          sale.source === 'DIRECT' 
+                            ? 'bg-purple-50 text-purple-600 border-purple-100' 
+                            : 'bg-red-50 text-red-600 border-red-100'
+                        }`}>
+                          {sale.source === 'DIRECT' ? <ShoppingCart size={18} /> : sale.customer.fullName.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-bold text-[var(--text-primary)]">{bk.id}</div>
-                          <div className="text-xs text-[var(--text-muted)] font-medium">{bk.customer.fullName} • {bk.customer.mobile}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-bold text-[var(--text-primary)]">{sale.id}</div>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                              sale.source === 'DIRECT' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {sale.source === 'DIRECT' ? 'DIRECT' : 'BOOKING'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-[var(--text-muted)] font-medium">{sale.customer.fullName} • {sale.customer.mobile}</div>
                           <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
-                            <Calendar size={10} /> {new Date(bk.date).toLocaleDateString()}
+                            <Calendar size={10} /> {new Date(sale.date).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="text-sm font-bold text-[var(--text-primary)]">{v?.brand} {v?.model}</div>
-                      <div className="text-xs text-[var(--text-muted)] mt-0.5">₹{bk.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">₹{sale.pricing.onRoadPrice.toLocaleString('en-IN')}</div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -463,7 +605,7 @@ export default function SalesProcessing() {
                     </td>
                     <td className="p-4 text-right">
                       <button
-                        onClick={(e) => { e.stopPropagation(); setSelectedBookingId(bk.id); }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id); setSelectedSaleSource(sale.source); }}
                         className="p-2 text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                       >
                         <FileText size={18} />
@@ -472,12 +614,12 @@ export default function SalesProcessing() {
                   </tr>
                 );
               })}
-              {paginatedBookings.length === 0 && (
+              {paginatedSales.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <FileText size={40} className="opacity-30" />
-                      <p>No bookings in sales processing.</p>
+                      <p>No sales in processing.</p>
                     </div>
                   </td>
                 </tr>
@@ -488,10 +630,10 @@ export default function SalesProcessing() {
       </div>
 
       {/* Pagination */}
-      {filteredBookings.length > 0 && (
+      {filteredSales.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--card-bg)] p-4 rounded-xl border border-[var(--border)]">
           <div className="text-xs sm:text-sm text-[var(--text-secondary)] font-medium">
-            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredSales.length)} of {filteredSales.length} sales
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg border border-[var(--border)] bg-[var(--card-bg)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed transition">Previous</button>
@@ -507,16 +649,23 @@ export default function SalesProcessing() {
       )}
 
       {/* Detail Side Panel */}
-      {selectedBooking && (
+      {selectedSale && (
         <div className="fixed inset-0 bg-[var(--modal-overlay)] backdrop-blur-[2px] z-50 flex items-center justify-end animate-in fade-in duration-200">
           <div className="bg-[var(--card-bg)] h-full w-full max-w-lg shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[var(--border)]">
             <div className="p-5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-xl font-black text-[var(--text-primary)]">{selectedBooking.id}</h2>
-                  <p className="text-sm text-[var(--text-muted)] font-medium mt-1">{selectedBooking.customer.fullName} • {new Date(selectedBooking.date).toLocaleDateString()}</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-black text-[var(--text-primary)]">{selectedSale.id}</h2>
+                    <span className={`text-[9px] px-2 py-1 rounded-full font-bold ${
+                      selectedSale.source === 'DIRECT' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {selectedSale.source === 'DIRECT' ? 'DIRECT SALE' : 'BOOKING'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--text-muted)] font-medium mt-1">{selectedSale.customer.fullName} • {new Date(selectedSale.date).toLocaleDateString()}</p>
                 </div>
-                <button onClick={() => setSelectedBookingId(null)} className="p-2 text-[var(--text-muted)] hover:bg-[var(--hover-bg)] rounded-full transition">
+                <button onClick={() => { setSelectedSaleId(null); setSelectedSaleSource(null); }} className="p-2 text-[var(--text-muted)] hover:bg-[var(--hover-bg)] rounded-full transition">
                   <X size={20} />
                 </button>
               </div>
@@ -527,9 +676,9 @@ export default function SalesProcessing() {
               <section>
                 <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Sales Journey Progress</h3>
                 <div className="space-y-3">
-                  {getSalesJourneySteps(selectedBooking).map((step, index) => {
+                  {getSalesJourneySteps(selectedSale).map((step, index) => {
                     const Icon = step.icon;
-                    const isLast = index === getSalesJourneySteps(selectedBooking).length - 1;
+                    const isLast = index === getSalesJourneySteps(selectedSale).length - 1;
                     
                     return (
                       <div key={step.id} className="relative">
@@ -570,51 +719,79 @@ export default function SalesProcessing() {
                 </div>
               </section>
 
-              <DocumentUploadSection booking={selectedBooking} />
+              {/* Document Upload - Only for bookings, direct sales have inline upload */}
+              {selectedSale.source === 'BOOKING' && (
+                <DocumentUploadSection booking={bookings.find(b => b.id === selectedSale.id)!} />
+              )}
+
+              {/* Direct Sale Documents Display */}
+              {selectedSale.source === 'DIRECT' && (
+                <section>
+                  <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Documents</h3>
+                  <div className="space-y-2">
+                    {Object.entries(selectedSale.documents).map(([key, doc]: [string, any]) => (
+                      <div key={key} className="flex items-center justify-between p-3 bg-[var(--bg-secondary)] rounded-lg">
+                        <span className="text-sm text-[var(--text-primary)] capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                          doc.file ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {doc.file ? '✓ Uploaded' : '⚠ Required'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               <section>
-                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">Booking Summary</h3>
+                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 border-b border-[var(--border)] pb-2">
+                  {selectedSale.source === 'BOOKING' ? 'Booking Summary' : 'Sale Summary'}
+                </h3>
                 <div className="bg-[var(--bg-secondary)] p-4 rounded-lg space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[var(--text-muted)]">Total Price</span>
-                    <span className="font-bold">₹{selectedBooking.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
+                    <span className="font-bold">₹{selectedSale.pricing.onRoadPrice.toLocaleString('en-IN')}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Paid</span>
-                    <span className="font-bold text-emerald-600">₹{selectedBooking.bookingAmountPaid.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Balance</span>
-                    <span className="font-bold text-red-600">₹{selectedBooking.balanceDue.toLocaleString('en-IN')}</span>
-                  </div>
+                  {selectedSale.source === 'BOOKING' && selectedSale.bookingAmountPaid !== undefined && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Paid</span>
+                        <span className="font-bold text-emerald-600">₹{selectedSale.bookingAmountPaid.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Balance</span>
+                        <span className="font-bold text-red-600">₹{selectedSale.balanceDue?.toLocaleString('en-IN')}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </section>
             </div>
 
             <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col gap-3">
-              {!selectedBooking.sale || !isSalesFormComplete(selectedBooking) ? (
+              {!isSalesFormComplete(selectedSale) ? (
                 // No sales details or incomplete - show proceed to sales
                 <>
                   <button
                     onClick={handleProceedToSales}
-                    disabled={!areAllDocumentsUploaded(selectedBooking)}
+                    disabled={!areAllDocumentsUploaded(selectedSale)}
                     className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-600/20"
                   >
                     <Zap size={18} />
                     Proceed to Sales
                   </button>
-                  {!areAllDocumentsUploaded(selectedBooking) && (
+                  {!areAllDocumentsUploaded(selectedSale) && (
                     <p className="text-xs text-center text-orange-600 dark:text-orange-400">
                       ⚠ Please upload all required documents first
                     </p>
                   )}
-                  {areAllDocumentsUploaded(selectedBooking) && selectedBooking.sale && !isSalesFormComplete(selectedBooking) && (
+                  {areAllDocumentsUploaded(selectedSale) && !isSalesFormComplete(selectedSale) && (selectedSale.source === 'BOOKING' ? selectedSale.sale : selectedSale.saleDetails) && (
                     <p className="text-xs text-center text-orange-600 dark:text-orange-400">
                       ⚠ Sales form is incomplete. Please complete all required fields.
                     </p>
                   )}
                 </>
-              ) : isApprovalPending(selectedBooking) ? (
+              ) : isApprovalPending(selectedSale) ? (
                 // Approval pending - show status, allow editing before payment
                 <>
                   <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
@@ -630,16 +807,16 @@ export default function SalesProcessing() {
                     Edit Sales Details
                   </button>
                 </>
-              ) : selectedBooking.paymentConfirmed || selectedBooking.status === 'Payment Complete' ? (
-                // CRITICAL FIX: Payment confirmed - LOCK editing, show view option and delivery
+              ) : selectedSale.paymentConfirmed || selectedSale.status === 'Payment Complete' ? (
+                // Payment confirmed - LOCK editing, show view option and delivery
                 <>
-                  {selectedBooking.deliveryConfirmed || selectedBooking.status === 'Delivered' ? (
+                  {selectedSale.deliveryConfirmed || selectedSale.status === 'Delivered' ? (
                     // Delivery complete - final state
                     <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                       <CheckCircle size={24} className="text-blue-600 dark:text-blue-400 mx-auto mb-2" />
                       <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Delivery Complete</p>
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        Sales lifecycle closed on {selectedBooking.deliveryDate ? new Date(selectedBooking.deliveryDate).toLocaleDateString('en-IN') : 'N/A'}
+                        Sales lifecycle closed
                       </p>
                     </div>
                   ) : (
@@ -650,16 +827,18 @@ export default function SalesProcessing() {
                       <p className="text-xs text-green-600 dark:text-green-400 mt-1">Sales record is locked - ready for delivery</p>
                     </div>
                   )}
-                  <button
-                    onClick={handleViewSalesDetails}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-                  >
-                    <Eye size={18} />
-                    View Sales Details
-                  </button>
-                  {canConfirmDelivery(selectedBooking) && (
+                  {selectedSale.source === 'BOOKING' && (
                     <button
-                      onClick={() => handleDeliveryClick(selectedBooking.id)}
+                      onClick={handleViewSalesDetails}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                    >
+                      <Eye size={18} />
+                      View Sales Details
+                    </button>
+                  )}
+                  {canConfirmDelivery(selectedSale) && (
+                    <button
+                      onClick={() => handleDeliveryClick(selectedSale.id, selectedSale.source)}
                       className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
                     >
                       <Truck size={18} />
@@ -667,11 +846,11 @@ export default function SalesProcessing() {
                     </button>
                   )}
                 </>
-              ) : canProceedToPayment(selectedBooking) ? (
+              ) : canProceedToPayment(selectedSale) ? (
                 // All complete - show payment and edit options (ONLY before payment)
                 <>
                   <button
-                    onClick={() => handlePaymentClick(selectedBooking.id)}
+                    onClick={() => handlePaymentClick(selectedSale.id, selectedSale.source)}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
                   >
                     <CreditCard size={18} />
@@ -687,7 +866,7 @@ export default function SalesProcessing() {
                   <p className="text-xs text-center text-orange-600 dark:text-orange-400">
                     ⚠ Sales details cannot be edited after payment confirmation
                   </p>
-                  {selectedBooking.sale && isSalesFormComplete(selectedBooking) && (
+                  {selectedSale.source === 'BOOKING' && isSalesFormComplete(selectedSale) && (
                     <button
                       onClick={handleViewSalesDetails}
                       className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition font-bold flex items-center justify-center gap-2"
@@ -709,7 +888,7 @@ export default function SalesProcessing() {
               )}
               
               <button
-                onClick={() => setSelectedBookingId(null)}
+                onClick={() => { setSelectedSaleId(null); setSelectedSaleSource(null); }}
                 className="w-full px-4 py-2 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
               >
                 Close
@@ -729,6 +908,18 @@ export default function SalesProcessing() {
           }}
           onSave={handleSaleSave}
           isEditMode={isEditMode}
+        />
+      )}
+
+      {/* Direct Sales Form Modal */}
+      {salesFormDirectId && (
+        <DirectSalesForm
+          saleId={salesFormDirectId}
+          onClose={() => {
+            setSalesFormDirectId(null);
+            setIsEditMode(false);
+          }}
+          onSave={handleDirectSaleSave}
         />
       )}
 
@@ -752,7 +943,7 @@ export default function SalesProcessing() {
                   Amount to Pay
                 </div>
                 <div className="text-3xl font-black text-blue-700 dark:text-blue-300">
-                  ₹{paymentBookingId && bookings.find(b => b.id === paymentBookingId)?.pricing.onRoadPrice.toLocaleString('en-IN')}
+                  ₹{paymentSaleId && paymentSaleSource && unifiedSales.find(s => s.id === paymentSaleId && s.source === paymentSaleSource)?.pricing.onRoadPrice.toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
@@ -775,7 +966,8 @@ export default function SalesProcessing() {
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
-                  setPaymentBookingId(null);
+                  setPaymentSaleId(null);
+                  setPaymentSaleSource(null);
                 }}
                 className="flex-1 px-4 py-2.5 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
               >
@@ -821,10 +1013,10 @@ export default function SalesProcessing() {
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-900/30 p-6 rounded-lg mb-6 border border-emerald-200 dark:border-emerald-800">
               <div className="text-center">
                 <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                  Booking ID
+                  {deliverySaleSource === 'BOOKING' ? 'Booking ID' : 'Sale ID'}
                 </div>
                 <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
-                  {deliveryBookingId && bookings.find(b => b.id === deliveryBookingId)?.id}
+                  {deliverySaleId && deliverySaleSource && unifiedSales.find(s => s.id === deliverySaleId && s.source === deliverySaleSource)?.id}
                 </div>
               </div>
             </div>
@@ -847,7 +1039,8 @@ export default function SalesProcessing() {
               <button
                 onClick={() => {
                   setShowDeliveryModal(false);
-                  setDeliveryBookingId(null);
+                  setDeliverySaleId(null);
+                  setDeliverySaleSource(null);
                 }}
                 className="flex-1 px-4 py-2.5 text-[var(--text-secondary)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover-bg)] transition font-semibold"
               >

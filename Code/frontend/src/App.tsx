@@ -14,6 +14,7 @@ import { VehicleProvider, useVehicles } from './state/VehicleContext';
 import { InquiryProvider } from './state/InquiryContext';
 import { BookingProvider } from './state/BookingContext';
 import { AccessoryProvider } from './state/AccessoryContext';
+import { DirectSaleProvider } from './state/DirectSaleContext';
 import AdminLayout from './components/admin/AdminLayout';
 import ShowroomManagement from './pages/admin/ShowroomManagement';
 import VehicleManagement from './pages/admin/VehicleManagement';
@@ -28,6 +29,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import BookingFlow from './pages/customer/BookingFlow'; 
 import VehicleCatalog from './pages/customer/VehicleCatalog';
+import DirectSalesEntry from './pages/admin/DirectSalesEntry';
 import NotFound from './pages/NotFound';
 
 import './index.css';
@@ -266,7 +268,8 @@ function App() {
             <InquiryProvider>
               <AccessoryProvider>
                 <BookingProvider>
-                  <div className="min-h-screen bg-[var(--background)] transition-colors duration-300">
+                  <DirectSaleProvider>
+                    <div className="min-h-screen bg-[var(--background)] transition-colors duration-300">
                     {!isAdminPath && <ScrollToHash />}
                     {!isAdminPath && <Navbar />}
                     <Routes>
@@ -292,6 +295,7 @@ function App() {
                         <Route path="bookings" element={<BookingManagement />} />
                         <Route path="bookings/new" element={<BookingFlow />} />
                         <Route path="sales-processing" element={<SalesProcessing />} />
+                        <Route path="direct-sales" element={<DirectSalesEntry />} />
                         <Route path="accessories" element={<AccessoriesManagement />} />
                         <Route path="reports" element={<ShowroomReports />} />
                         <Route path="settings" element={<div className="p-8 font-bold text-[var(--text-primary)] transition-colors">Settings (Coming Soon)</div>} />
@@ -303,7 +307,8 @@ function App() {
                     </Routes>
                     {!isAdminPath && <Footer />}
                     <Toaster position="bottom-right" />
-                  </div>
+                    </div>
+                  </DirectSaleProvider>
                 </BookingProvider>
               </AccessoryProvider>
             </InquiryProvider>
